@@ -16,20 +16,36 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  -- exposed-modules:     
+  exposed-modules:     PopVox.Types
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
-  -- hs-source-dirs:      
+                     , text
+                     , wreq
+                     , aeson
+                     , conduit
+                     , resourcet
+                     , conduit-extra
+                     , csv-conduit
+                     , html-conduit
+                     , errors
+                     , mtl
+                     , transformers
+                     , lens
+  hs-source-dirs:      src
   default-language:    Haskell2010
+
 executable popvox-scrape
   main-is:             Main.hs
-  -- other-modules:       
+  other-modules:       Paths_popvox_scrape
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , popvox-scrape
                      , text
                      , optparse-applicative
+                     , errors
+                     , mtl
+                     , transformers
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 
