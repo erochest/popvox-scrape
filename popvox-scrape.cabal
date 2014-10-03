@@ -32,6 +32,8 @@ library
                      , mtl
                      , transformers
                      , lens
+                     , acid-state
+                     , monad-par
   hs-source-dirs:      src
   default-language:    Haskell2010
 
