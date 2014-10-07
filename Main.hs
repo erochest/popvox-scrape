@@ -1,20 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 
 module Main where
 
 
+import           Data.CSV.Conduit
+import qualified Data.Text                 as T
+import qualified Data.Vector               as V
 import           Data.Version
 import           Filesystem.Path.CurrentOS
 import           Options.Applicative
 import           Prelude                   hiding (FilePath)
 
 import           Paths_popvox_scrape
+import           PopVox.OpenSecrets
 import           PopVox.Types
 
 
 main :: IO ()
-main = print =<< execParser opts
+main = do
+    PopVoxOptions{..} <- execParser opts
+    let filename = _popVoxOpenSecretsDir </> "pac_other12.txt"
+    rows <- readOpenSecrets filename :: IO (V.Vector (Row T.Text))
+    mapM_ print $ V.toList rows
 
 
 opts' :: Parser PopVoxOptions

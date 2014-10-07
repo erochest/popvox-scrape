@@ -53,6 +53,8 @@ executable popvox-scrape
                      , mtl
                      , transformers
                      , system-filepath
+                     , vector
+                     , csv-conduit
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 
