@@ -23,6 +23,8 @@ import qualified Data.Text                   as T
 import           Data.Text.Encoding          (decodeLatin1)
 import qualified Data.Vector                 as V
 
+import           PopVox.OpenSecrets.Utils
+
 
 type Year = Int
 
@@ -85,12 +87,6 @@ data RecipientType
         | OutsideSpending !ContribType
         deriving (Show, Eq)
 makePrisms ''RecipientType
-
-char :: Char -> A.Parser B.ByteString
-char = fmap B.singleton . A.word8 . toEnum . fromEnum
-
-given :: A.Parser a -> A.Parser (Maybe a)
-given p = fmap Just p <|> (char ' ' *> pure Nothing)
 
 parseRecipientType :: B.ByteString -> Either String RecipientType
 parseRecipientType = A.parseOnly (recipientType <* A.endOfInput)
