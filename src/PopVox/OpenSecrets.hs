@@ -30,8 +30,8 @@ import           PopVox.OpenSecrets.Types
 csvSettings :: CSVSettings
 csvSettings = CSVSettings ',' $ Just '|'
 
-readOpenSecrets :: (Functor m, MonadIO m)
-                => FilePath -> m (Either String (V.Vector CommitteeRecord))
+readOpenSecrets :: (Functor m, MonadIO m, FromRecord a)
+                => FilePath -> m (Either String (V.Vector a))
 readOpenSecrets = fmap (traverse (runParser . parseRecord))
                 . readCSVFile csvSettings
                 . encodeString
@@ -41,5 +41,6 @@ readOpenSecretsC :: (MonadResource m, CSV BS.ByteString a)
 readOpenSecretsC filePath =
     sourceFile (encodeString filePath) $= intoCSV csvSettings
 
-parseOpenSecrets :: Monad m => Conduit Record m (Either String CommitteeRecord)
+parseOpenSecrets :: (Monad m, FromRecord a)
+                 => Conduit Record m (Either String a)
 parseOpenSecrets = CL.map (runParser . parseRecord)
