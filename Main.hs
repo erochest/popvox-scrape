@@ -5,6 +5,10 @@
 module Main where
 
 
+import           Control.Monad.IO.Class
+import qualified Data.ByteString           as B
+import           Data.Conduit
+import qualified Data.Conduit.List         as CL
 import           Data.CSV.Conduit
 import qualified Data.Text                 as T
 import qualified Data.Vector               as V
@@ -15,15 +19,17 @@ import           Prelude                   hiding (FilePath)
 
 import           Paths_popvox_scrape
 import           PopVox.OpenSecrets
+import           PopVox.OpenSecrets.Types
 import           PopVox.Types
 
 
 main :: IO ()
 main = do
     PopVoxOptions{..} <- execParser opts
-    let filename = _popVoxOpenSecretsDir </> "pac_other12.txt"
-    rows <- readOpenSecrets filename :: IO (V.Vector (Row T.Text))
-    mapM_ print $ V.toList rows
+    let filename = _popVoxOpenSecretsDir </> "cmtes12.txt"
+    runResourceT $ readOpenSecretsC filename
+        $= parseOpenSecrets
+        $$ CL.mapM_ (liftIO . print)
 
 
 opts' :: Parser PopVoxOptions

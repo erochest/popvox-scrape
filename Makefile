@@ -8,8 +8,8 @@ init:
 test: build
 	cabal test --test-option=--color
 
-run:
-	cabal run
+run: build
+	cabal run -- -s opensecrets.org/ > os.out
 
 # docs:
 # generate api documentation
