@@ -6,9 +6,11 @@ module PopVox.OpenSecrets.Types
     ) where
 
 
+import           PopVox.OpenSecrets.Types.Candidates
 import           PopVox.OpenSecrets.Types.Committees
 import           PopVox.OpenSecrets.Types.Common
 
+import qualified PopVox.OpenSecrets.Types.Candidates as X
 import qualified PopVox.OpenSecrets.Types.Committees as X
 import qualified PopVox.OpenSecrets.Types.Common     as X
 

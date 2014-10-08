@@ -36,6 +36,8 @@ main = do
     PopVoxOptions{..} <- execParser opts
     testOpenSecrets (_popVoxOpenSecretsDir </> "cmtes12.txt")
                     (parseOpenSecrets :: Translator CommitteeRecord)
+    testOpenSecrets (_popVoxOpenSecretsDir </> "cands12.txt")
+                    (parseOpenSecrets :: Translator Candidate)
 
 testOpenSecrets :: (FromRecord a, Show a)
                 => FilePath -> Translator a -> IO ()

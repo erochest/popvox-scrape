@@ -7,7 +7,7 @@ module PopVox.OpenSecrets.Utils
     ) where
 
 
-import Control.Applicative
+import           Control.Applicative
 import qualified Data.Attoparsec.ByteString as A
 import qualified Data.ByteString            as B
 

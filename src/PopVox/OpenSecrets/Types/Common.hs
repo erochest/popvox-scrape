@@ -8,9 +8,12 @@ module PopVox.OpenSecrets.Types.Common
     , CandidateStatus(..)
     , ContribType(..)
     , RecipientType(..)
+    , District(..)
     ) where
 
 
+import Data.Text.Encoding
+import qualified Data.Text as T
 import           Control.Applicative
 import           Control.Lens
 import qualified Data.Attoparsec.ByteString  as A
@@ -119,3 +122,35 @@ instance FromField RecipientType where
         either (const err) return $ parseRecipientType field
         where err = fail $ "Invalid RecipientType: '" ++ C8.unpack field ++ "'"
 
+data District
+        = House !T.Text !T.Text
+        | Senate1
+        | Senate2
+        | President
+        deriving (Show, Eq)
+makeLenses ''District
+makePrisms ''District
+
+instance FromField District where
+    parseField "S1"   = pure Senate1
+    parseField "S2"   = pure Senate2
+    parseField "PRES" = pure President
+    parseField f
+        | B.length f == 4 = pure . uncurry House . T.splitAt 2 $ decodeUtf8 f
+        | otherwise       = fail $ "Invalid District: '" ++ C8.unpack f ++ "'"
+
+instance FromField Bool where
+    parseField "R" = return True        -- ^ This is slightly arbitrary.
+    parseField "Y" = return True
+    parseField "y" = return True
+    parseField "1" = return True
+    parseField "T" = return True
+    parseField "t" = return True
+    parseField "N" = return False
+    parseField "n" = return False
+    parseField "0" = return False
+    parseField "F" = return False
+    parseField "f" = return False
+    parseField " " = return False
+    parseField ""  = return False
+    parseField b   = fail $ "Invalid Bool: '" ++ C8.unpack b ++ "'"

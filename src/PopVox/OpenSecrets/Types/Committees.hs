@@ -18,21 +18,6 @@ import qualified Data.Vector                     as V
 import           PopVox.OpenSecrets.Types.Common
 
 
-instance FromField Bool where
-    parseField "R" = return True        -- ^ This is slightly arbitrary.
-    parseField "Y" = return True
-    parseField "y" = return True
-    parseField "1" = return True
-    parseField "T" = return True
-    parseField "t" = return True
-    parseField "N" = return False
-    parseField "n" = return False
-    parseField "0" = return False
-    parseField "F" = return False
-    parseField "f" = return False
-    parseField ""  = return False
-    parseField b   = fail $ "Invalid Bool: '" ++ C8.unpack b ++ "'"
-
 data CommitteeRecord = CR
                      { _crCycle     :: !Year
                      , _crID        :: !T.Text
