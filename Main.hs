@@ -38,6 +38,8 @@ main = do
                     (parseOpenSecrets :: Translator CommitteeRecord)
     testOpenSecrets (_popVoxOpenSecretsDir </> "cands12.txt")
                     (parseOpenSecrets :: Translator Candidate)
+    testOpenSecrets (_popVoxOpenSecretsDir </> "indivs12.txt")
+                    (parseOpenSecrets :: Translator Individual)
 
 testOpenSecrets :: (FromRecord a, Show a)
                 => FilePath -> Translator a -> IO ()
@@ -50,7 +52,7 @@ testOpenSecrets filepath translator = do
     putStrLn ""
 
     where
-        accum (Left err) =  liftIO (print $ "ERROR: " ++ err)
+        accum (Left err) =  liftIO (putStrLn $ "ERROR: " ++ err)
                          >> return (Sum 1, mempty)
         accum (Right _)  = return (mempty, Sum 1)
 

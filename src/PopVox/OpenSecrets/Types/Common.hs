@@ -107,7 +107,7 @@ parseRecipientType = A.parseOnly (recipientType <* A.endOfInput)
                         <|> char 'O' *> return Opn
                         <|> char 'N' *> return Non
         contribType     =   char 'B' *> return Bus
-                        <|> char 'b' *> return Lab
+                        <|> char 'b' *> return Bus
                         <|> char 'L' *> return Lab
                         <|> char 'l' *> return Lab
                         <|> char 'I' *> return Ideo
