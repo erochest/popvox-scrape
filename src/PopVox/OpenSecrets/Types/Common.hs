@@ -10,6 +10,7 @@ module PopVox.OpenSecrets.Types.Common
     , RecipientType(..)
     , District(..)
     , TransactionType(..)
+    , isValue
     ) where
 
 
@@ -26,6 +27,9 @@ import           System.Locale
 
 import           PopVox.OpenSecrets.Utils
 
+
+isValue :: B.ByteString -> B.ByteString -> Bool
+isValue a b = a == b
 
 type Year = Int
 
@@ -146,18 +150,26 @@ data TransactionType = TransContribution
                      | TransEarmarked
                      | TransCommittee
                      | TransRefund
+                     | TransRefundCandidate
                      | TransSoft
                      | TransCode T.Text
                      | TransIndExpenditureAgainst
                      | TransCoordExpenditureAgainst
                      | TransIndExpenditureFor
                      | TransCommCostFor
+                     | TransAffiliatedCmte
                      | TransDirect
                      | TransCommCostAgainst
+                     | TransRecountDisb
                      | TransInKind
+                     | TransTribal
                      deriving (Show, Eq)
 
 instance FromField TransactionType where
+    parseField "10"  = pure TransSoft
+    parseField "10 " = pure TransSoft
+    parseField "11"  = pure TransTribal
+    parseField "11 " = pure TransTribal
     parseField "15"  = pure TransContribution
     parseField "15 " = pure TransContribution
     parseField "15e" = pure TransEarmarked
@@ -166,14 +178,16 @@ instance FromField TransactionType where
     parseField "15J" = pure TransCommittee
     parseField "22y" = pure TransRefund
     parseField "22Y" = pure TransRefund
-    parseField "10"  = pure TransSoft
-    parseField "10 " = pure TransSoft
+    parseField "22z" = pure TransRefundCandidate
+    parseField "22Z" = pure TransRefundCandidate
     parseField "24A" = pure TransIndExpenditureAgainst
     parseField "24C" = pure TransCoordExpenditureAgainst
     parseField "24E" = pure TransCoordExpenditureAgainst
     parseField "24F" = pure TransCommCostFor
+    parseField "24G" = pure TransAffiliatedCmte
     parseField "24K" = pure TransDirect
     parseField "24N" = pure TransCommCostAgainst
+    parseField "24R" = pure TransRecountDisb
     parseField "24Z" = pure TransInKind
     parseField t     = pure . TransCode $ decodeLatin1 t
 

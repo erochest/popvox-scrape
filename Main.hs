@@ -32,6 +32,9 @@ type Translator a = Conduit Record (ResourceT IO) (Either String a)
 main :: IO ()
 main = do
     PopVoxOptions{..} <- execParser opts
+
+    testOpenSecrets (_popVoxOpenSecretsDir </> "pac_other12.txt")
+                    (parseOpenSecrets :: Translator PACtoPAC)
     testOpenSecrets (_popVoxOpenSecretsDir </> "cmtes12.txt")
                     (parseOpenSecrets :: Translator CommitteeRecord)
     testOpenSecrets (_popVoxOpenSecretsDir </> "cands12.txt")
@@ -49,7 +52,7 @@ testOpenSecrets filepath translator = do
     (errs, oks) <- fmap (bimap getSum getSum) $ runResourceT $
         readOpenSecretsC filepath $= translator $$ CL.foldMapM accum
     end <- getCPUTime
-    let elapsed = (fromIntegral (end - start)) / ((10^12) :: Int)
+    let elapsed = (fromIntegral (end - start)) / ((10^12) :: Double)
     putStrLn $ "ERROR COUNT: " ++ show (errs :: Int)
     putStrLn $ "OK    COUNT: " ++ show (oks :: Int)
     printf     "Elapsed    : %0.3f sec\n" (elapsed :: Double)

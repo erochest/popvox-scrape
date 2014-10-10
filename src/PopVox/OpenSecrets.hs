@@ -24,8 +24,6 @@ import qualified Data.Vector                  as V
 import           Filesystem.Path.CurrentOS
 import           Prelude                      hiding (FilePath)
 
-import           PopVox.OpenSecrets.Types
-
 
 csvSettings :: CSVSettings
 csvSettings = CSVSettings ',' $ Just '|'

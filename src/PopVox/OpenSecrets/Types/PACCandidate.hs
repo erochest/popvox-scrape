@@ -8,6 +8,7 @@ module PopVox.OpenSecrets.Types.PACCandidate
 
 
 import           Control.Applicative
+import           Control.Lens
 import qualified Data.ByteString                 as B
 import           Data.CSV.Conduit.Conversion
 import qualified Data.Text                       as T
@@ -29,7 +30,7 @@ data PACCandidate = PACCandidate
                   , _paccDirect      :: !Bool
                   , _paccFECCandID   :: !T.Text
                   } deriving (Show, Eq)
-
+makeLenses ''PACCandidate
 
 instance FromRecord PACCandidate where
     parseRecord r
