@@ -8,19 +8,17 @@ module Main where
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Resource
 import           Data.Bifunctor
-import qualified Data.ByteString              as B
 import           Data.Conduit
 import qualified Data.Conduit.List            as CL
-import           Data.CSV.Conduit
 import           Data.CSV.Conduit.Conversion  hiding (Parser)
 import           Data.Either
 import           Data.Monoid
-import qualified Data.Text                    as T
-import qualified Data.Vector                  as V
 import           Data.Version
 import           Filesystem.Path.CurrentOS
 import           Options.Applicative
 import           Prelude                      hiding (FilePath)
+import           System.CPUTime
+import           Text.Printf
 
 import           Paths_popvox_scrape
 import           PopVox.OpenSecrets
@@ -40,15 +38,21 @@ main = do
                     (parseOpenSecrets :: Translator Candidate)
     testOpenSecrets (_popVoxOpenSecretsDir </> "indivs12.txt")
                     (parseOpenSecrets :: Translator Individual)
+    testOpenSecrets (_popVoxOpenSecretsDir </> "pacs12.txt")
+                    (parseOpenSecrets :: Translator PACCandidate)
 
 testOpenSecrets :: (FromRecord a, Show a)
                 => FilePath -> Translator a -> IO ()
 testOpenSecrets filepath translator = do
     print filepath
+    start <- getCPUTime
     (errs, oks) <- fmap (bimap getSum getSum) $ runResourceT $
         readOpenSecretsC filepath $= translator $$ CL.foldMapM accum
-    putStrLn $ "ERROR COUNT: " ++ show errs
-    putStrLn $ "OK    COUNT: " ++ show oks
+    end <- getCPUTime
+    let elapsed = (fromIntegral (end - start)) / ((10^12) :: Int)
+    putStrLn $ "ERROR COUNT: " ++ show (errs :: Int)
+    putStrLn $ "OK    COUNT: " ++ show (oks :: Int)
+    printf     "Elapsed    : %0.3f sec\n" (elapsed :: Double)
     putStrLn ""
 
     where

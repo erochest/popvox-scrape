@@ -13,38 +13,11 @@ import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
 import qualified Data.Text                       as T
 import           Data.Text.Encoding              (decodeLatin1)
+import           Data.Time
 import qualified Data.Vector                     as V
-import Data.Time
-import System.Locale
 
 import           PopVox.OpenSecrets.Types.Common
 
-
-instance FromField Day where
-    parseField bs =
-        maybe err pure $ parseTime defaultTimeLocale "%m/%d/%Y" (C8.unpack bs)
-        where err = fail $ "Invalid date: '" ++ C8.unpack bs ++ "'"
-
-data TransactionType = TransContribution
-                     | TransEarmarked
-                     | TransCommittee
-                     | TransRefund
-                     | TransSoft
-                     | TransCode T.Text
-                     deriving (Show, Eq)
-
-instance FromField TransactionType where
-    parseField "15"  = pure TransContribution
-    parseField "15 " = pure TransContribution
-    parseField "15e" = pure TransEarmarked
-    parseField "15E" = pure TransEarmarked
-    parseField "15j" = pure TransCommittee
-    parseField "15J" = pure TransCommittee
-    parseField "22y" = pure TransRefund
-    parseField "22Y" = pure TransRefund
-    parseField "10"  = pure TransSoft
-    parseField "10 " = pure TransSoft
-    parseField t     = pure . TransCode $ decodeLatin1 t
 
 data Gender = Male
             | Female

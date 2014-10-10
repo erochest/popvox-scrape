@@ -9,17 +9,20 @@ module PopVox.OpenSecrets.Types.Common
     , ContribType(..)
     , RecipientType(..)
     , District(..)
+    , TransactionType(..)
     ) where
 
 
-import Data.Text.Encoding
-import qualified Data.Text as T
 import           Control.Applicative
 import           Control.Lens
 import qualified Data.Attoparsec.ByteString  as A
 import qualified Data.ByteString             as B
 import qualified Data.ByteString.Char8       as C8
 import           Data.CSV.Conduit.Conversion
+import qualified Data.Text                   as T
+import           Data.Text.Encoding
+import           Data.Time
+import           System.Locale
 
 import           PopVox.OpenSecrets.Utils
 
@@ -139,6 +142,41 @@ instance FromField District where
         | B.length f == 4 = pure . uncurry House . T.splitAt 2 $ decodeUtf8 f
         | otherwise       = fail $ "Invalid District: '" ++ C8.unpack f ++ "'"
 
+data TransactionType = TransContribution
+                     | TransEarmarked
+                     | TransCommittee
+                     | TransRefund
+                     | TransSoft
+                     | TransCode T.Text
+                     | TransIndExpenditureAgainst
+                     | TransCoordExpenditureAgainst
+                     | TransIndExpenditureFor
+                     | TransCommCostFor
+                     | TransDirect
+                     | TransCommCostAgainst
+                     | TransInKind
+                     deriving (Show, Eq)
+
+instance FromField TransactionType where
+    parseField "15"  = pure TransContribution
+    parseField "15 " = pure TransContribution
+    parseField "15e" = pure TransEarmarked
+    parseField "15E" = pure TransEarmarked
+    parseField "15j" = pure TransCommittee
+    parseField "15J" = pure TransCommittee
+    parseField "22y" = pure TransRefund
+    parseField "22Y" = pure TransRefund
+    parseField "10"  = pure TransSoft
+    parseField "10 " = pure TransSoft
+    parseField "24A" = pure TransIndExpenditureAgainst
+    parseField "24C" = pure TransCoordExpenditureAgainst
+    parseField "24E" = pure TransCoordExpenditureAgainst
+    parseField "24F" = pure TransCommCostFor
+    parseField "24K" = pure TransDirect
+    parseField "24N" = pure TransCommCostAgainst
+    parseField "24Z" = pure TransInKind
+    parseField t     = pure . TransCode $ decodeLatin1 t
+
 instance FromField Bool where
     parseField "R" = return True        -- ^ This is slightly arbitrary.
     parseField "Y" = return True
@@ -154,3 +192,8 @@ instance FromField Bool where
     parseField " " = return False
     parseField ""  = return False
     parseField b   = fail $ "Invalid Bool: '" ++ C8.unpack b ++ "'"
+
+instance FromField Day where
+    parseField bs =
+        maybe err pure $ parseTime defaultTimeLocale "%m/%d/%Y" (C8.unpack bs)
+        where err = fail $ "Invalid date: '" ++ C8.unpack bs ++ "'"

@@ -22,6 +22,7 @@ library
                      , PopVox.OpenSecrets.Types.Committees
                      , PopVox.OpenSecrets.Types.Common
                      , PopVox.OpenSecrets.Types.Individual
+                     , PopVox.OpenSecrets.Types.PACCandidate
                      , PopVox.OpenSecrets.Utils
                      , PopVox.Types
   -- other-modules:       
