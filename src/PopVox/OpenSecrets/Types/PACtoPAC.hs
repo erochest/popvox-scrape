@@ -10,6 +10,7 @@ module PopVox.OpenSecrets.Types.PACtoPAC
 import           Control.Applicative
 import           Control.Lens
 import qualified Data.ByteString                 as B
+import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
 import qualified Data.Text                       as T
 import           Data.Time
@@ -38,7 +39,7 @@ data PACtoPAC = PACtoPAC
               , _pacpRecipPrimCode    :: !T.Text
               , _pacpAmend            :: !Bool
               , _pacpReport           :: !T.Text
-              , _pacpPrimary          :: !Bool
+              , _pacpElection         :: !(Maybe ElectionType)
               , _pacpMicrofilm        :: !T.Text
               , _pacpType             :: !TransactionType
               , _pacpRealCode         :: !T.Text
@@ -68,9 +69,9 @@ instance FromRecord PACtoPAC where
                            <*> r .! 16
                            <*> (isValue "A" <$> r .! 17)
                            <*> r .! 18
-                           <*> (isValue "P" <$> r .! 19)
+                           <*> r .! 19
                            <*> r .! 20
                            <*> r .! 21
                            <*> r .! 22
                            <*> r .! 23
-        | otherwise        = fail "Invalid PACtoPAC"
+        | otherwise        = fail $ "Invalid PACtoPAC: '" ++ show r ++ "'"

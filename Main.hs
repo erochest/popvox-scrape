@@ -33,6 +33,8 @@ main :: IO ()
 main = do
     PopVoxOptions{..} <- execParser opts
 
+    testOpenSecrets (_popVoxOpenSecretsDir </> "expends12.txt")
+                    (parseOpenSecrets :: Translator Expenditure)
     testOpenSecrets (_popVoxOpenSecretsDir </> "pac_other12.txt")
                     (parseOpenSecrets :: Translator PACtoPAC)
     testOpenSecrets (_popVoxOpenSecretsDir </> "cmtes12.txt")

@@ -21,6 +21,7 @@ library
                      , PopVox.OpenSecrets.Types.Candidates
                      , PopVox.OpenSecrets.Types.Committees
                      , PopVox.OpenSecrets.Types.Common
+                     , PopVox.OpenSecrets.Types.Expenditures
                      , PopVox.OpenSecrets.Types.Individual
                      , PopVox.OpenSecrets.Types.PACCandidate
                      , PopVox.OpenSecrets.Types.PACtoPAC

@@ -10,19 +10,25 @@ module PopVox.OpenSecrets.Types.Common
     , RecipientType(..)
     , District(..)
     , TransactionType(..)
+    , ElectionType(..)
     , isValue
     ) where
 
 
 import           Control.Applicative
+import           Control.Error
 import           Control.Lens
+import           Control.Monad
 import qualified Data.Attoparsec.ByteString  as A
 import qualified Data.ByteString             as B
 import qualified Data.ByteString.Char8       as C8
 import           Data.CSV.Conduit.Conversion
+import           Data.Maybe
 import qualified Data.Text                   as T
 import           Data.Text.Encoding
+import           Data.Text.Read
 import           Data.Time
+import           Data.Word
 import           System.Locale
 
 import           PopVox.OpenSecrets.Utils
@@ -126,8 +132,8 @@ parseRecipientType = A.parseOnly (recipientType <* A.endOfInput)
 
 instance FromField RecipientType where
     parseField field =
-        either (const err) return $ parseRecipientType field
-        where err = fail $ "Invalid RecipientType: '" ++ C8.unpack field ++ "'"
+        either err return $ parseRecipientType field
+        where err m = fail $ "Invalid RecipientType ('" ++ C8.unpack field ++ "'): " ++ m
 
 data District
         = House !T.Text !T.Text
@@ -190,6 +196,61 @@ instance FromField TransactionType where
     parseField "24R" = pure TransRecountDisb
     parseField "24Z" = pure TransInKind
     parseField t     = pure . TransCode $ decodeLatin1 t
+
+data ElectionType = ElectionPrimary !(Maybe Year)
+                  | ElectionGeneral !(Maybe Year)
+                  | ElectionSpecial !(Maybe Year)
+                  | ElectionRunoff  !(Maybe Year)
+                  | ElectionOther   !(Maybe Year)
+                  | ElectionUnknown !(Maybe Char) !Year
+                  | ElectionRaw     !T.Text
+                  deriving (Show, Eq)
+makePrisms ''ElectionType
+
+parseElectionType :: B.ByteString -> ElectionType
+parseElectionType et =
+      either (const . ElectionRaw . T.strip $ decodeLatin1 et) id
+    . join
+    . fmap (note "")
+    $ A.parseOnly (skipSpaces *> electionType <* skipSpaces <* A.endOfInput) et
+
+electionType :: A.Parser (Maybe ElectionType)
+electionType = A.option (fmap (ElectionUnknown Nothing)) code <*> year
+
+code :: A.Parser (Maybe Year -> Maybe ElectionType)
+code =   (char 'P' *> pure (Just . ElectionPrimary))
+     <|> (char 'G' *> pure (Just . ElectionGeneral))
+     <|> (char 'O' *> pure (Just . ElectionOther))
+     <|> (char 'R' *> pure (Just . ElectionRunoff))
+     <|> (char 'S' *> pure (Just . ElectionSpecial))
+     <|> (unknown <$> A.satisfy isLetter)
+
+year :: A.Parser (Maybe Int)
+year = do
+    digits <- numbers
+    return $ if (B.length digits == 4)
+        then Just (B.foldl' accumYear 0 digits)
+        else Nothing
+
+numbers :: A.Parser B.ByteString
+numbers = A.takeWhile isDigit
+
+accumYear :: Int -> Word8 -> Int
+accumYear accum w = accum * 10 + (fromIntegral w - 48)
+
+unknown :: Word8 -> Maybe Year -> Maybe ElectionType
+unknown w y = ElectionUnknown (Just . toEnum $ fromEnum w) <$> y
+
+skipSpaces :: A.Parser ()
+skipSpaces = A.skipWhile isSpace
+
+isLetter, isDigit, isSpace :: Word8 -> Bool
+isLetter l = l >= 65 && l <= 90
+isDigit d  = d >= 48 && d <= 57
+isSpace s  = s == 32 || s == 9 || s == 10 || s == 13
+
+instance FromField ElectionType where
+    parseField field = return $ parseElectionType field
 
 instance FromField Bool where
     parseField "R" = return True        -- ^ This is slightly arbitrary.
