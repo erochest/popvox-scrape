@@ -4,6 +4,7 @@
 module PopVox.Types
     ( PopVoxOptions(..)
     , popVoxOpenSecretsDir
+    , popVoxVerbose
     ) where
 
 
@@ -13,6 +14,7 @@ import           Prelude                   hiding (FilePath)
 
 
 data PopVoxOptions = PopVoxOptions
-    { _popVoxOpenSecretsDir :: FilePath
+    { _popVoxOpenSecretsDir :: !FilePath
+    , _popVoxVerbose        :: !Bool
     } deriving (Show)
 makeLenses ''PopVoxOptions

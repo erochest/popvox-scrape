@@ -4,6 +4,8 @@
 
 module PopVox.OpenSecrets.Types.Individual
     ( Individual(..)
+    , indOrgName
+    , indUltOrg
     ) where
 
 

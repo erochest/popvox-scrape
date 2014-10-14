@@ -5,6 +5,8 @@
 module Main where
 
 
+import           Control.Lens                 hiding (argument)
+import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Resource
 import           Data.Bifunctor
@@ -12,7 +14,10 @@ import           Data.Conduit
 import qualified Data.Conduit.List            as CL
 import           Data.CSV.Conduit.Conversion  hiding (Parser)
 import           Data.Either
+import           Data.Either
 import           Data.Monoid
+import qualified Data.Text                    as T
+import qualified Data.Text.Format             as F
 import           Data.Version
 import           Filesystem.Path.CurrentOS
 import           Options.Applicative
@@ -31,20 +36,22 @@ type Translator a = Conduit Record (ResourceT IO) (Either String a)
 
 main :: IO ()
 main = do
-    PopVoxOptions{..} <- execParser opts
+    (PopVoxOptions{..}, query) <- execParser opts
 
-    testOpenSecrets (_popVoxOpenSecretsDir </> "expends12.txt")
-                    (parseOpenSecrets :: Translator Expenditure)
-    testOpenSecrets (_popVoxOpenSecretsDir </> "pac_other12.txt")
-                    (parseOpenSecrets :: Translator PACtoPAC)
-    testOpenSecrets (_popVoxOpenSecretsDir </> "cmtes12.txt")
-                    (parseOpenSecrets :: Translator CommitteeRecord)
-    testOpenSecrets (_popVoxOpenSecretsDir </> "cands12.txt")
-                    (parseOpenSecrets :: Translator Candidate)
-    testOpenSecrets (_popVoxOpenSecretsDir </> "indivs12.txt")
-                    (parseOpenSecrets :: Translator Individual)
-    testOpenSecrets (_popVoxOpenSecretsDir </> "pacs12.txt")
-                    (parseOpenSecrets :: Translator PACCandidate)
+    start <- getCPUTime
+
+    F.print "Querying \"{}\"\n" $ F.Only query
+    count <- runResourceT $ readOpenSecretsC (_popVoxOpenSecretsDir </> "indivs12.txt")
+                 $= parseOpenSecrets
+                 $= CL.filter ((== (Just query)) . preview (_Right . indOrgName))
+                 -- $$ CL.consume
+                 $$ CL.foldMapM (const (return (Sum 1)) <=< liftIO . print)
+
+    end <- getCPUTime
+    when _popVoxVerbose $ do
+        let elapsed = (fromIntegral (end - start)) / ((10^12) :: Double)
+        F.print "Results: {}\n"     . F.Only $ getSum (count :: Sum Int)
+        F.print "Elapsed: {} sec\n" $ F.Only elapsed
 
 testOpenSecrets :: (FromRecord a, Show a)
                 => FilePath -> Translator a -> IO ()
@@ -54,7 +61,7 @@ testOpenSecrets filepath translator = do
     (errs, oks) <- fmap (bimap getSum getSum) $ runResourceT $
         readOpenSecretsC filepath $= translator $$ CL.foldMapM accum
     end <- getCPUTime
-    let elapsed = (fromIntegral (end - start)) / ((10^12) :: Double)
+    let elapsed = ((fromIntegral (end - start)) / ((10^(12 :: Int)) :: Double)) :: Double
     putStrLn $ "ERROR COUNT: " ++ show (errs :: Int)
     putStrLn $ "OK    COUNT: " ++ show (oks :: Int)
     printf     "Elapsed    : %0.3f sec\n" (elapsed :: Double)
@@ -65,14 +72,21 @@ testOpenSecrets filepath translator = do
                          >> return (Sum 1, mempty)
         accum (Right _)  = return (mempty, Sum 1)
 
-opts' :: Parser PopVoxOptions
-opts' =   PopVoxOptions
-      <$> fileOpt (  short 's'
-                  <> long "opensecrets"
-                  <> metavar "DIRNAME"
-                  <> help "The location of the opensecrets.org data sets.")
+opts' :: Parser (PopVoxOptions, T.Text)
+opts' = (,) <$> popVox <*> query
+    where
+        popVox =   PopVoxOptions
+               <$> fileOpt (  short 's'
+                           <> long "opensecrets"
+                           <> metavar "DIRNAME"
+                           <> help "The location of the opensecrets.org data sets.")
+               <*> switch  (  short 'v'
+                           <> long "verbose"
+                           <> help "Print extra information.")
+        query  = argument (Just . T.pack) (  metavar "QUERY"
+                                          <> help "The organization to query for.")
 
-opts :: ParserInfo PopVoxOptions
+opts :: ParserInfo (PopVoxOptions, T.Text)
 opts = info (helper <*> opts')
             (  fullDesc
             <> progDesc "Scrapes data from popvox.com and \
