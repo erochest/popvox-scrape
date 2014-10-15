@@ -4,8 +4,29 @@
 
 module PopVox.OpenSecrets.Types.Individual
     ( Individual(..)
+    , indCycle
+    , indFECID
+    , indContribID
+    , indContrib
+    , indRecipID
     , indOrgName
     , indUltOrg
+    , indRealCode
+    , indDate
+    , indAmount
+    , indStreet
+    , indCity
+    , indState
+    , indZip
+    , indRecipCode
+    , indType
+    , indCommitteeID
+    , indOtherID
+    , indGender
+    , indMicrofilm
+    , indOccupation
+    , indEmployer
+    , indRealCodeSource
     ) where
 
 

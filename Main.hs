@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TupleSections     #-}
 
 
 module Main where
@@ -14,7 +15,9 @@ import           Data.Conduit
 import qualified Data.Conduit.List            as CL
 import           Data.CSV.Conduit.Conversion  hiding (Parser)
 import           Data.Either
-import           Data.Either
+import           Data.Hashable
+import qualified Data.HashMap.Strict          as M
+import qualified Data.List                    as L
 import           Data.Monoid
 import qualified Data.Text                    as T
 import qualified Data.Text.Format             as F
@@ -33,6 +36,14 @@ import           PopVox.Types
 
 type Translator a = Conduit Record (ResourceT IO) (Either String a)
 
+newtype HashIndex k v = HashIndex { getIndex :: M.HashMap k v }
+
+instance (Eq k, Hashable k, Monoid v) => Monoid (HashIndex k v) where
+    mempty = HashIndex mempty
+    mappend (HashIndex m1) (HashIndex m2) = HashIndex $ M.unionWith mappend m1 m2
+
+type IndexAmount = (Sum Int, HashIndex RecipientType (Sum Int))
+
 
 main :: IO ()
 main = do
@@ -41,17 +52,33 @@ main = do
     start <- getCPUTime
 
     F.print "Querying \"{}\"\n" $ F.Only query
-    count <- runResourceT $ readOpenSecretsC (_popVoxOpenSecretsDir </> "indivs12.txt")
+    (Sum count, HashIndex index) <- runResourceT $
+        readOpenSecretsC (_popVoxOpenSecretsDir </> "indivs12.txt")
                  $= parseOpenSecrets
                  $= CL.filter ((== (Just query)) . preview (_Right . indOrgName))
-                 -- $$ CL.consume
-                 $$ CL.foldMapM (const (return (Sum 1)) <=< liftIO . print)
+                 $$ CL.foldMap ((Sum 1,) . indexIndiv)
 
     end <- getCPUTime
     when _popVoxVerbose $ do
         let elapsed = (fromIntegral (end - start)) / ((10^12) :: Double)
-        F.print "Results: {}\n"     . F.Only $ getSum (count :: Sum Int)
-        F.print "Elapsed: {} sec\n" $ F.Only elapsed
+        F.print  "Results: {}\n"     $ F.Only (count  :: Int)
+        putStrLn "Amounts:"
+        forM_ (M.toList $ fmap getSum index) $
+            F.print "\t{} => {}\n" . over _1 F.Shown
+        F.print  "Elapsed: {} sec\n" $ F.Only elapsed
+
+indexIndiv :: Either String Individual -> HashIndex Party (Sum Int)
+indexIndiv (Left _) = mempty
+indexIndiv (Right Individual{..}) =
+    HashIndex
+        .   maybe mempty (`M.singleton` (Sum _indAmount))
+        $   getParty
+        =<< _indRecipCode
+    where
+        getParty (CandidateR p _)    = Just p
+        getParty (CommitteeR p)      = Just p
+        getParty (PACR _ )           = Nothing
+        getParty (OutsideSpending _) = Nothing
 
 testOpenSecrets :: (FromRecord a, Show a)
                 => FilePath -> Translator a -> IO ()

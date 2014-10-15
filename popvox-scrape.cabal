@@ -51,6 +51,7 @@ library
                      , time
                      , old-locale
                      , errors
+                     , hashable
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -74,6 +75,8 @@ executable popvox-scrape
                      , bifunctors
                      , text-format
                      , lens
+                     , unordered-containers
+                     , hashable
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 

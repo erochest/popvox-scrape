@@ -9,7 +9,7 @@ test: build
 	cabal test --test-option=--color
 
 run:
-	cabal run -- -s opensecrets.org/ AARP
+	cabal run -- --verbose --opensecrets opensecrets.org/ AARP
 
 # docs:
 # generate api documentation

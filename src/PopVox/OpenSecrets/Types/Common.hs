@@ -1,13 +1,40 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 
 module PopVox.OpenSecrets.Types.Common
     ( Year
+
     , Party(..)
+    , _Dem
+    , _Rep
+    , _Ind
+    , _Lib
+    , _Thr
+    , _PUnk
+
     , CandidateStatus(..)
+    , _Win
+    , _Los
+    , _Inc
+    , _Cha
+    , _Opn
+    , _Non
+
     , ContribType(..)
+    , _Bus
+    , _Lab
+    , _Ideo
+    , _PACOther
+    , _PACUnk
+
     , RecipientType(..)
+    , _CandidateR
+    , _CommitteeR
+    , _PACR
+    , _OutsideSpending
+
     , District(..)
     , TransactionType(..)
     , ElectionType(..)
@@ -23,12 +50,14 @@ import qualified Data.Attoparsec.ByteString  as A
 import qualified Data.ByteString             as B
 import qualified Data.ByteString.Char8       as C8
 import           Data.CSV.Conduit.Conversion
+import           Data.Hashable
 import           Data.Maybe
 import qualified Data.Text                   as T
 import           Data.Text.Encoding
 import           Data.Text.Read
 import           Data.Time
 import           Data.Word
+import           GHC.Generics                (Generic)
 import           System.Locale
 
 import           PopVox.OpenSecrets.Utils
@@ -45,8 +74,10 @@ data Party = Dem
            | Lib
            | Thr
            | PUnk
-           deriving (Show, Eq, Bounded)
+           deriving (Show, Eq, Bounded, Generic)
 makePrisms ''Party
+
+instance Hashable Party
 
 instance FromField Party where
     parseField "D" = return Dem
@@ -63,8 +94,10 @@ data CandidateStatus = Win
                      | Cha
                      | Opn
                      | Non
-                     deriving (Show, Eq, Bounded)
+                     deriving (Show, Eq, Bounded, Generic)
 makePrisms ''CandidateStatus
+
+instance Hashable CandidateStatus
 
 instance FromField CandidateStatus where
     parseField "W" = return Win
@@ -80,8 +113,10 @@ data ContribType = Bus
                  | Ideo
                  | PACOther
                  | PACUnk
-                 deriving (Show, Eq, Bounded)
+                 deriving (Show, Eq, Bounded, Generic)
 makePrisms ''ContribType
+
+instance Hashable ContribType
 
 instance FromField ContribType where
     parseField "B" = return Bus
@@ -96,8 +131,10 @@ data RecipientType
         | CommitteeR !Party
         | PACR !ContribType
         | OutsideSpending !ContribType
-        deriving (Show, Eq)
+        deriving (Show, Eq, Generic)
 makePrisms ''RecipientType
+
+instance Hashable RecipientType
 
 parseRecipientType :: B.ByteString -> Either String RecipientType
 parseRecipientType = A.parseOnly (recipientType <* A.endOfInput)
