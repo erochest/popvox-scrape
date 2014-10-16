@@ -16,7 +16,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox.OpenSecrets
+  exposed-modules:     PopVox
+                     , PopVox.OpenSecrets
                      , PopVox.OpenSecrets.Types
                      , PopVox.OpenSecrets.Types.Candidates
                      , PopVox.OpenSecrets.Types.Committees

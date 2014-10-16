@@ -8,31 +8,19 @@ module Main where
 
 import           Control.Monad
 import           Control.Monad.Trans.Resource
-import qualified Data.ByteString              as BS
 import           Data.Conduit
 import           Data.Conduit.Binary
 import qualified Data.Conduit.List            as CL
 import           Data.CSV.Conduit
-import           Data.CSV.Conduit.Conversion  hiding (Parser)
-import           Data.Either
-import           Data.Foldable
-import qualified Data.HashMap.Strict          as M
 import qualified Data.HashSet                 as S
 import qualified Data.List                    as L
-import qualified Data.Map.Lazy                as ML
-import           Data.Monoid
-import qualified Data.Text                    as T
-import           Data.Text.Encoding
 import qualified Data.Text.Format             as F
 import           Filesystem.Path.CurrentOS
 import           Prelude                      hiding (FilePath)
 import           System.CPUTime
 
 import           Opts
-import           PopVox.OpenSecrets
-import           PopVox.OpenSecrets.Output
-import           PopVox.OpenSecrets.Types
-import           PopVox.Types
+import           PopVox
 
 
 
