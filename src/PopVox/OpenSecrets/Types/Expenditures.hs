@@ -1,19 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 
 module PopVox.OpenSecrets.Types.Expenditures
     ( Expenditure(..)
+
+    , indexExp
     ) where
 
 
-import Data.Text.Encoding
 import           Control.Applicative
 import           Control.Lens
-import qualified Data.ByteString                 as B
 import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
+import           Data.Monoid
 import qualified Data.Text                       as T
+import           Data.Text.Encoding
 import           Data.Time
 import qualified Data.Vector                     as V
 
@@ -90,3 +93,10 @@ instance FromRecord Expenditure where
                            <*> optional (r .! 19)
                            <*> r .! 20
         | otherwise        = fail $ "Invalid Expenditure: " ++ show r ++ "'"
+
+indexExp :: Either String Expenditure -> OrgIndex Double
+indexExp (Left _) = mempty
+indexExp (Right Expenditure{..}) =
+    maybe mempty (orgIndex name _expAmount) $ getParty' _expRecipCode
+    where
+        name = T.strip _expCRPRecipName

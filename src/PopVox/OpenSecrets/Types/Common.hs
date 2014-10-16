@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 
 module PopVox.OpenSecrets.Types.Common
@@ -39,6 +40,14 @@ module PopVox.OpenSecrets.Types.Common
     , TransactionType(..)
     , ElectionType(..)
     , isValue
+
+    , PartyIndex
+    , getParty
+    , getParty'
+
+    , OrgIndex
+    , orgs
+    , orgIndex
     ) where
 
 
@@ -51,16 +60,18 @@ import qualified Data.ByteString             as B
 import qualified Data.ByteString.Char8       as C8
 import           Data.CSV.Conduit.Conversion
 import           Data.Hashable
-import           Data.Maybe
+import qualified Data.HashMap.Strict         as M
+import qualified Data.HashSet                as S
+import           Data.Monoid
 import qualified Data.Text                   as T
 import           Data.Text.Encoding
-import           Data.Text.Read
 import           Data.Time
 import           Data.Word
 import           GHC.Generics                (Generic)
 import           System.Locale
 
 import           PopVox.OpenSecrets.Utils
+import           PopVox.Types
 
 
 isValue :: B.ByteString -> B.ByteString -> Bool
@@ -169,8 +180,8 @@ parseRecipientType = A.parseOnly (recipientType <* A.endOfInput)
 
 instance FromField RecipientType where
     parseField field =
-        either err return $ parseRecipientType field
-        where err m = fail $ "Invalid RecipientType ('" ++ C8.unpack field ++ "'): " ++ m
+        either mkErr return $ parseRecipientType field
+        where mkErr m = fail $ "Invalid RecipientType ('" ++ C8.unpack field ++ "'): " ++ m
 
 data District
         = House !T.Text !T.Text
@@ -265,7 +276,7 @@ code =   (char 'P' *> pure (Just . ElectionPrimary))
 year :: A.Parser (Maybe Int)
 year = do
     digits <- numbers
-    return $ if (B.length digits == 4)
+    return $ if B.length digits == 4
         then Just (B.foldl' accumYear 0 digits)
         else Nothing
 
@@ -307,5 +318,28 @@ instance FromField Bool where
 
 instance FromField Day where
     parseField bs =
-        maybe err pure $ parseTime defaultTimeLocale "%m/%d/%Y" (C8.unpack bs)
-        where err = fail $ "Invalid date: '" ++ C8.unpack bs ++ "'"
+        maybe errMsg pure $ parseTime defaultTimeLocale "%m/%d/%Y" (C8.unpack bs)
+        where errMsg = fail $ "Invalid date: '" ++ C8.unpack bs ++ "'"
+
+type PartyIndex a = HashIndex Party (Sum a)
+
+getParty' :: Maybe RecipientType -> Maybe Party
+getParty' = (getParty =<<)
+
+getParty :: RecipientType -> Maybe Party
+getParty (CandidateR p _)    = Just p
+getParty (CommitteeR p)      = Just p
+getParty (PACR _ )           = Nothing
+getParty (OutsideSpending _) = Nothing
+
+type OrgIndex a   = HashIndex T.Text (PartyIndex a)
+
+orgs :: OrgIndex a -> S.HashSet T.Text
+orgs = S.fromList . M.keys . getIndex
+
+orgIndex :: T.Text -> a -> Party -> OrgIndex a
+orgIndex org amount party = HashIndex
+                          . M.singleton org
+                          . HashIndex
+                          . M.singleton party
+                          $ Sum amount

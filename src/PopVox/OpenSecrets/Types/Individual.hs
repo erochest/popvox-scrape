@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 
@@ -27,6 +28,8 @@ module PopVox.OpenSecrets.Types.Individual
     , indOccupation
     , indEmployer
     , indRealCodeSource
+
+    , indexIndiv
     ) where
 
 
@@ -34,6 +37,7 @@ import           Control.Applicative
 import           Control.Lens
 import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
+import           Data.Monoid
 import qualified Data.Text                       as T
 import           Data.Text.Encoding              (decodeLatin1)
 import           Data.Time
@@ -111,3 +115,9 @@ instance FromRecord Individual where
                            <*> r .! 22
         | otherwise        = fail "Invalid Individual"
 
+indexIndiv :: Either String Individual -> OrgIndex Int
+indexIndiv (Left _) = mempty
+indexIndiv (Right Individual{..}) =
+    maybe mempty (orgIndex name _indAmount) $ getParty' _indRecipCode
+    where
+        name = T.strip _indOrgName

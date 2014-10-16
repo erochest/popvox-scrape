@@ -25,6 +25,7 @@ library
                      , PopVox.OpenSecrets.Types.Individual
                      , PopVox.OpenSecrets.Types.PACCandidate
                      , PopVox.OpenSecrets.Types.PACtoPAC
+                     , PopVox.OpenSecrets.Output
                      , PopVox.OpenSecrets.Utils
                      , PopVox.Types
   -- other-modules:       
@@ -52,12 +53,15 @@ library
                      , old-locale
                      , errors
                      , hashable
+                     , containers
+                     , unordered-containers
   hs-source-dirs:      src
   default-language:    Haskell2010
 
 executable popvox-scrape
   main-is:             Main.hs
   other-modules:       Paths_popvox_scrape
+                     , Opts
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , popvox-scrape
