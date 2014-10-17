@@ -32,6 +32,8 @@ main = do
 
     i <- indexFile (_popVoxOpenSecretsDir </> "indivs12.txt")  indexIndiv
     e <- indexFile (_popVoxOpenSecretsDir </> "expends12.txt") indexExp
+    -- i <- indexFileP (_popVoxOpenSecretsDir </> "indivs12.txt")  4096 50 indexIndiv
+    -- e <- indexFileP (_popVoxOpenSecretsDir </> "expends12.txt") 4096 50 indexExp
     let allOrgs = L.sort . S.toList $ orgs i `S.union` orgs e
 
     runResourceT $  CL.sourceList allOrgs

@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 
@@ -52,6 +53,8 @@ module PopVox.OpenSecrets.Types.Common
 
 
 import           Control.Applicative
+import           Control.DeepSeq
+import           Control.DeepSeq.Generics
 import           Control.Error
 import           Control.Lens
 import           Control.Monad
@@ -87,6 +90,8 @@ data Party = Dem
            | PUnk
            deriving (Show, Eq, Bounded, Generic)
 makePrisms ''Party
+
+instance NFData Party
 
 instance Hashable Party
 
@@ -343,3 +348,5 @@ orgIndex org amount party = HashIndex
                           . HashIndex
                           . M.singleton party
                           $ Sum amount
+
+instance NFData a => NFData (Sum a)

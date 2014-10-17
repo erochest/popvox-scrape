@@ -1,4 +1,6 @@
 
+FLAGS=--enable-tests --enable-library-profiling --enable-executable-profiling
+
 all: init test docs package
 
 init:
@@ -9,7 +11,7 @@ test: build
 	cabal test --test-option=--color
 
 run:
-	cabal run -- --verbose --opensecrets opensecrets.org/ --output donations.csv
+	cabal run -- --verbose --opensecrets opensecrets.org/ --output donations.csv +RTS -p
 
 # docs:
 # generate api documentation
@@ -36,11 +38,11 @@ distclean: clean
 	cabal sandbox delete
 
 configure: clean
-	cabal configure --enable-tests
+	cabal configure ${FLAGS}
 
 deps: clean
-	cabal install --only-dependencies --allow-newer --enable-tests
-	cabal configure --enable-tests
+	cabal install --only-dependencies --allow-newer ${FLAGS}
+	make configure
 
 build:
 	cabal build

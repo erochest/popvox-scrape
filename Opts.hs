@@ -10,6 +10,7 @@ module Opts
 import           Data.Version
 import           Filesystem.Path.CurrentOS
 import           Options.Applicative
+import           Options.Applicative.Types
 import           Prelude                   hiding (FilePath)
 
 import           Paths_popvox_scrape
@@ -38,4 +39,4 @@ opts = info (helper <*> opts')
             <> header ("popvox-scrape v" ++ showVersion version))
 
 fileOpt :: Mod OptionFields FilePath -> Parser FilePath
-fileOpt = option (pure . decodeString)
+fileOpt = option (decodeString <$> readerAsk)
