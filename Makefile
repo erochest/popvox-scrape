@@ -1,4 +1,6 @@
 
+FLAGS=--enable-tests
+
 all: init test docs package
 
 init:
@@ -36,11 +38,11 @@ distclean: clean
 	cabal sandbox delete
 
 configure: clean
-	cabal configure --enable-tests
+	cabal configure ${FLAGS}
 
 deps: clean
-	cabal install --only-dependencies --allow-newer --enable-tests
-	cabal configure --enable-tests
+	cabal install --only-dependencies --allow-newer ${FLAGS}
+	make configure
 
 build:
 	cabal build
