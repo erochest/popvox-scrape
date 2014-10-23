@@ -5,6 +5,7 @@ module PopVox.Types
     ( PopVoxOptions(..)
     , popVoxOpenSecretsDir
     , popVoxOutput
+    , popVoxAPI
     , popVoxVerbose
 
     , HashIndex(..)
@@ -22,6 +23,7 @@ import           Data.Hashable
 data PopVoxOptions = PopVoxOptions
     { _popVoxOpenSecretsDir :: !FilePath
     , _popVoxOutput         :: !FilePath
+    , _popVoxAPI            :: !BS.ByteString
     , _popVoxVerbose        :: !Bool
     } deriving (Show)
 makeLenses ''PopVoxOptions

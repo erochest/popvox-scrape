@@ -7,6 +7,8 @@ module Opts
     ) where
 
 
+import qualified Data.ByteString.Char8     as BS
+import qualified Data.Text                 as T
 import           Data.Version
 import           Filesystem.Path.CurrentOS
 import           Options.Applicative
@@ -27,6 +29,10 @@ opts' =   PopVoxOptions
                   <> long "output"
                   <> metavar "OUTPUT_FILE"
                   <> help "The CSV filename to write the data to.")
+      <*> byteOpt (  short 'a'
+                  <> long "api"
+                  <> metavar "POPVOX_API"
+                  <> help "You PopVox API key.")
       <*> switch  (  short 'v'
                   <> long "verbose"
                   <> help "Print extra information.")
@@ -40,3 +46,9 @@ opts = info (helper <*> opts')
 
 fileOpt :: Mod OptionFields FilePath -> Parser FilePath
 fileOpt = option (decodeString <$> readerAsk)
+
+textOpt :: Mod OptionFields T.Text -> Parser T.Text
+textOpt = option (T.pack <$> readerAsk)
+
+byteOpt :: Mod OptionFields BS.ByteString -> Parser BS.ByteString
+byteOpt = option (BS.pack <$> readerAsk)
