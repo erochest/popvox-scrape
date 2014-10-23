@@ -29,7 +29,7 @@ opts' =   PopVoxOptions
                   <> long "output"
                   <> metavar "OUTPUT_FILE"
                   <> help "The CSV filename to write the data to.")
-      <*> byteOpt (  short 'a'
+      <*> apiOpt  (  short 'a'
                   <> long "api"
                   <> metavar "POPVOX_API"
                   <> help "You PopVox API key.")
@@ -52,3 +52,6 @@ textOpt = option (T.pack <$> readerAsk)
 
 byteOpt :: Mod OptionFields BS.ByteString -> Parser BS.ByteString
 byteOpt = option (BS.pack <$> readerAsk)
+
+apiOpt :: Mod OptionFields APIKey -> Parser APIKey
+apiOpt = option (APIKey . BS.pack <$> readerAsk)

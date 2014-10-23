@@ -20,10 +20,13 @@ import           Prelude                   hiding (FilePath)
 import           Data.Hashable
 
 
+newtype APIKey = APIKey { getAPIKey :: BS.ByteString }
+                 deriving (Show)
+
 data PopVoxOptions = PopVoxOptions
     { _popVoxOpenSecretsDir :: !FilePath
     , _popVoxOutput         :: !FilePath
-    , _popVoxAPI            :: !BS.ByteString
+    , _popVoxAPI            :: !APIKey
     , _popVoxVerbose        :: !Bool
     } deriving (Show)
 makeLenses ''PopVoxOptions
