@@ -17,6 +17,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     PopVox
+                     , PopVox.API
                      , PopVox.OpenSecrets
                      , PopVox.OpenSecrets.Types
                      , PopVox.OpenSecrets.Types.Candidates
@@ -35,6 +36,7 @@ library
                      , text
                      , wreq
                      , aeson
+                     , lens-aeson
                      , conduit
                      , resourcet
                      , conduit-extra

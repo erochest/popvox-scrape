@@ -32,11 +32,12 @@ import qualified Data.ByteString           as BS
 import           Data.Hashable
 import qualified Data.HashMap.Strict       as M
 import           Data.Monoid
+import qualified Data.Text                 as T
 import           Filesystem.Path.CurrentOS
 import           Prelude                   hiding (FilePath)
 
 
-newtype APIKey = APIKey { getAPIKey :: BS.ByteString }
+newtype APIKey = APIKey { getAPIKey :: T.Text }
                  deriving (Show)
 
 data PopVoxOptions = PopVoxOptions

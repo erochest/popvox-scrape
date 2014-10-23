@@ -54,4 +54,4 @@ byteOpt :: Mod OptionFields BS.ByteString -> Parser BS.ByteString
 byteOpt = option (BS.pack <$> readerAsk)
 
 apiOpt :: Mod OptionFields APIKey -> Parser APIKey
-apiOpt = option (APIKey . BS.pack <$> readerAsk)
+apiOpt = option (APIKey . T.pack <$> readerAsk)
