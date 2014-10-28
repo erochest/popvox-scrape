@@ -20,6 +20,7 @@ import           Data.Conduit.Binary
 import qualified Data.Conduit.List               as CL
 import           Data.CSV.Conduit
 import           Data.CSV.Conduit.Conversion
+import           Data.Monoid
 import           Data.Traversable
 import qualified Data.Vector                     as V
 import           Filesystem.Path.CurrentOS
@@ -46,8 +47,8 @@ parseOpenSecrets :: (Monad m, FromRecord a)
                  => Conduit Record m (Either String a)
 parseOpenSecrets = CL.map (runParser . parseRecord)
 
-indexFile :: (FromRecord a, Num b)
-          => FilePath -> (Either String a -> OrgIndex b) -> IO (OrgIndex b)
+indexFile :: (FromRecord a, Monoid b)
+          => FilePath -> (Either String a -> b) -> IO b
 indexFile input f =  runResourceT
                   $  readOpenSecretsC input
                   $= parseOpenSecrets

@@ -1,21 +1,31 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 
 module PopVox.OpenSecrets.Types.Committees
     ( CommitteeRecord(..)
+    , indexCmte
     ) where
 
 
 import           Control.Applicative
+import           Control.Arrow
 import           Control.Lens
-import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
-import qualified Data.Text                       as T
-import           Data.Text.Encoding              (decodeLatin1)
-import qualified Data.Vector                     as V
+import qualified Data.DList                          as D
+import qualified Data.HashMap.Strict                 as M
+import           Data.Maybe
+import           Data.Monoid
+import qualified Data.Text                           as T
+import           Data.Text.Encoding                  (decodeLatin1)
+import           Data.Traversable
+import           Data.Tuple
+import qualified Data.Vector                         as V
 
 import           PopVox.OpenSecrets.Types.Common
+import           PopVox.OpenSecrets.Types.Individual
+import           PopVox.Types
 
 
 data CommitteeRecord = CR
@@ -54,3 +64,18 @@ instance FromRecord CommitteeRecord where
                            <*> r .! 12
                            <*> r .! 13
         | otherwise        =   fail "Invalid CommitteeRecord"
+
+indexCmte :: HashIndex T.Text (D.DList Individual)
+          -> Either String CommitteeRecord
+          -> OrgIndex Int
+indexCmte _      (Left _)       = HashIndex M.empty
+indexCmte indivs (Right CR{..}) = HashIndex
+                                . M.singleton _crUltOrg
+                                . HashIndex
+                                . M.fromListWith mappend
+                                . mapMaybe ( fmap swap
+                                           . sequenceA
+                                           . ((Sum . _indAmount) &&& (getParty' . _indRecipCode)))
+                                . maybe [] D.toList
+                                . M.lookup _crID
+                                $ getIndex indivs

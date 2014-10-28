@@ -30,6 +30,7 @@ module PopVox.OpenSecrets.Types.Individual
     , indRealCodeSource
 
     , indexIndiv
+    , indexByCmte
     ) where
 
 
@@ -37,6 +38,8 @@ import           Control.Applicative
 import           Control.Lens
 import qualified Data.ByteString.Char8           as C8
 import           Data.CSV.Conduit.Conversion
+import qualified Data.DList                      as D
+import qualified Data.HashMap.Strict             as M
 import           Data.Monoid
 import qualified Data.Text                       as T
 import           Data.Text.Encoding              (decodeLatin1)
@@ -44,6 +47,7 @@ import           Data.Time
 import qualified Data.Vector                     as V
 
 import           PopVox.OpenSecrets.Types.Common
+import           PopVox.Types
 
 
 data Gender = Male
@@ -121,3 +125,8 @@ indexIndiv (Right Individual{..}) =
     maybe mempty (orgIndex name _indAmount) $ getParty' _indRecipCode
     where
         name = T.strip _indOrgName
+
+indexByCmte :: Either String Individual
+            -> HashIndex T.Text (D.DList Individual)
+indexByCmte (Left _)  = HashIndex M.empty
+indexByCmte (Right i) = HashIndex . M.singleton (_indCommitteeID i) $ D.singleton i
