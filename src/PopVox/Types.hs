@@ -11,8 +11,32 @@ module PopVox.Types
     , popVoxAPI
     , popVoxVerbose
 
+    , Bill(..)
+    , billID
+    , billCongress
+    , billTitle
+    , billType
+    , billNumber
+    , billURL
+
+    , Org(..)
+    , orgID
+    , orgName
+    , orgURL
+
+    , OrgPosition(..)
+    , positionOrg
+    , positionBill
+    , position
+
+    , Position
+
     , HashIndex(..)
+
     , APIKey(..)
+    , BillID
+    , OrgID
+
     , PopVoxSessionT(..)
     , runPopVox
     , hoistEither
@@ -37,8 +61,41 @@ import           Filesystem.Path.CurrentOS
 import           Prelude                   hiding (FilePath)
 
 
+type BillID = Int
+type OrgID  = Int
+
 newtype APIKey = APIKey { getAPIKey :: T.Text }
                  deriving (Show)
+
+data Bill = Bill
+          { _billID       :: !BillID
+          , _billCongress :: !Int
+          , _billTitle    :: !T.Text
+          , _billType     :: !T.Text
+          , _billNumber   :: !Int
+          , _billURL      :: !String
+          } deriving (Show)
+makeLenses ''Bill
+
+data Org = Org
+         { _orgID   :: !OrgID
+         , _orgName :: !T.Text
+         , _orgURL  :: !String
+         } deriving (Show)
+makeLenses ''Org
+
+data Position = PosPositive
+              | PosNegative
+              | PosNeutral
+              deriving (Show)
+makePrisms ''Position
+
+data OrgPosition = OrgPos
+                 { _positionOrg  :: !OrgID
+                 , _positionBill :: !BillID
+                 , _position     :: !Position
+                 } deriving (Show)
+makeLenses ''OrgPosition
 
 data PopVoxOptions = PopVoxOptions
     { _popVoxOpenSecretsDir :: !FilePath
