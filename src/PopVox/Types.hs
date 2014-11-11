@@ -85,8 +85,8 @@ instance ColumnHead Party where
     columnBuilder GOP = "GOP"
 
 
-data ContribType = Expenditure
-                 | Contribution
+data ContribType = Contribution
+                 | Expenditure
                  deriving (Show, Eq, Enum, Bounded, Generic)
 
 instance Hashable ContribType

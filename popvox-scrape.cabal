@@ -16,7 +16,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox.Output
+  exposed-modules:     PopVox.Contribs
+                     , PopVox.Output
                      , PopVox.Types
   -- other-modules:       
   -- other-extensions:    
