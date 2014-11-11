@@ -21,6 +21,6 @@ opts' = pure PopVoxOptions
 opts :: ParserInfo PopVoxOptions
 opts = info (helper <*> opts')
             (  fullDesc
-            <> progDesc "Scrapes data from popvox.com and \
-                        \mashes it with opensecrets.org data."
+            <> progDesc "Assemble a dataset of bill positions and\
+                        \ political contributions."
             <> header ("popvox-scrape v" ++ showVersion version))
