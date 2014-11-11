@@ -98,8 +98,11 @@ instance ColumnHead ContribType where
     columnBuilder Contribution = ""
 
 
-data ContribEntry = Contrib Party ContribType Year
-                  deriving (Show, Eq, Generic)
+data ContribEntry = Contrib
+                  { contribParty :: !Party
+                  , contribType  :: !ContribType
+                  , contribYear  :: !Year
+                  } deriving (Show, Eq, Generic)
 
 instance Hashable ContribEntry
 
@@ -126,8 +129,11 @@ instance ColumnHead Chamber where
     columnBuilder Senate = "S"
 
 
-data Bill = Bill BillNo Chamber Congress
-          deriving (Eq, Generic)
+data Bill = Bill
+          { billNo       :: !BillNo
+          , billChamber  :: !Chamber
+          , billCongress :: !Congress
+          } deriving (Eq, Generic)
 
 instance ColumnHead Bill where
     columnValue (Bill n ch cong) =
@@ -138,7 +144,11 @@ instance ColumnHead Bill where
                <> B.singleton ')'
 
 
-data OrgData = Org OrgName ContribIndex BillIndex
+data OrgData = Org
+             { orgName     :: !OrgName
+             , orgContribs :: !ContribIndex
+             , orgBills    :: !BillIndex
+             }
 
 data PopVoxOptions = PopVoxOptions
                    deriving (Show)
