@@ -7,7 +7,9 @@
 
 
 module PopVox.Types
-    ( PopVoxOptions(..)
+    ( Header
+
+    , PopVoxOptions(..)
 
     , ColumnHead(..)
 
@@ -33,6 +35,8 @@ module PopVox.Types
 
 
 import           Control.DeepSeq
+import           Data.ByteString            (ByteString)
+import           Data.CSV.Conduit           (Row)
 import           Data.Foldable
 import           Data.Hashable
 import qualified Data.HashMap.Strict        as M
@@ -44,6 +48,8 @@ import           Data.Text.Lazy.Builder.Int
 import           Data.Traversable
 import           GHC.Generics
 
+
+type Header = Row ByteString
 
 type OrgName  = T.Text
 type Year     = Int
@@ -74,7 +80,7 @@ instance (Hashable k, Eq k, Monoid v) => Monoid (HashIndex k v) where
 
 
 data Party = Dem | GOP
-           deriving (Show, Eq, Enum, Bounded, Generic)
+           deriving (Show, Eq, Enum, Bounded, Ord, Generic)
 
 instance Hashable Party
 
@@ -87,7 +93,7 @@ instance ColumnHead Party where
 
 data ContribType = Contribution
                  | Expenditure
-                 deriving (Show, Eq, Enum, Bounded, Generic)
+                 deriving (Show, Eq, Enum, Ord, Bounded, Generic)
 
 instance Hashable ContribType
 
@@ -102,7 +108,7 @@ data ContribEntry = Contrib
                   { contribParty :: !Party
                   , contribType  :: !ContribType
                   , contribYear  :: !Year
-                  } deriving (Show, Eq, Generic)
+                  } deriving (Show, Eq, Ord, Generic)
 
 instance Hashable ContribEntry
 
@@ -120,7 +126,7 @@ instance ColumnHead ContribEntry where
 
 data Chamber = House
              | Senate
-             deriving (Eq, Enum, Bounded, Generic)
+             deriving (Eq, Enum, Bounded, Ord, Generic)
 
 instance ColumnHead Chamber where
     columnValue   House  = "HR"
@@ -133,7 +139,7 @@ data Bill = Bill
           { billNo       :: !BillNo
           , billChamber  :: !Chamber
           , billCongress :: !Congress
-          } deriving (Eq, Generic)
+          } deriving (Eq, Ord, Generic)
 
 instance ColumnHead Bill where
     columnValue (Bill n ch cong) =
