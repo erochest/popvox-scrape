@@ -64,6 +64,7 @@ type BillIndex    = HashIndex Bill Int
 class ColumnHead c where
     columnValue   :: c -> T.Text
     columnBuilder :: c -> B.Builder
+    columnValue   = build' . columnBuilder
     columnBuilder = B.fromText . columnValue
 
 build' :: B.Builder -> T.Text
@@ -113,10 +114,10 @@ data ContribEntry = Contrib
 instance Hashable ContribEntry
 
 instance ColumnHead ContribEntry where
-    columnValue (Contrib p t y) =
-        build' $  columnBuilder p
-               <> columnBuilder t
-               <> B.fromString (last2 $ show y)
+    columnBuilder (Contrib p t y) = mconcat [ columnBuilder p
+                                            , columnBuilder t
+                                            , B.fromString (last2 $ show y)
+                                            ]
         where
               last2 []        = []
               last2 xs@[_]    = xs
@@ -142,12 +143,12 @@ data Bill = Bill
           } deriving (Eq, Ord, Generic)
 
 instance ColumnHead Bill where
-    columnValue (Bill n ch cong) =
-        build' $  columnBuilder ch
-               <> decimal n
-               <> " ("
-               <> decimal cong
-               <> B.singleton ')'
+    columnBuilder (Bill n ch cong) = mconcat [ columnBuilder ch
+                                             , decimal n
+                                             , " ("
+                                             , decimal cong
+                                             , B.singleton ')'
+                                             ]
 
 
 data OrgData = Org
