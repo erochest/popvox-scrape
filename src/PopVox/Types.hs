@@ -64,11 +64,8 @@ type BillIndex    = HashIndex Bill Int
 class ColumnHead c where
     columnValue   :: c -> T.Text
     columnBuilder :: c -> B.Builder
-    columnValue   = build' . columnBuilder
+    columnValue   = TL.toStrict . B.toLazyText . columnBuilder
     columnBuilder = B.fromText . columnValue
-
-build' :: B.Builder -> T.Text
-build' = TL.toStrict . B.toLazyText
 
 
 newtype HashIndex k v
