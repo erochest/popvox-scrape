@@ -21,6 +21,12 @@ opts' =   PopVoxOptions
       <$> textOpt (  short 'k' <> long "api-key" <> metavar "API_KEY"
                   <> help "The API key to use when accessing the\
                           \ maplight.org API.")
+      <*> strOption (  short 'd' <> long "data-dir" <> value "./data"
+                    <> metavar "MAPLIGHT_DATA_DIR"
+                    <> help "The directory containing the contribution\
+                            \ data. Defaults to './data'.")
+      <*> strOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
+                    <> help "The file to write the output to.")
 
 opts :: ParserInfo PopVoxOptions
 opts = info (helper <*> opts')

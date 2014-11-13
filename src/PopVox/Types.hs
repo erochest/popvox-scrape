@@ -271,5 +271,7 @@ data OrgData = Org
              }
 
 data PopVoxOptions = PopVoxOptions
-                   { maplightApiKey :: ApiKey
+                   { maplightApiKey  :: !ApiKey
+                   , maplightDataDir :: !FilePath
+                   , outputFile      :: !FilePath
                    } deriving (Show)
