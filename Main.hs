@@ -4,6 +4,7 @@
 module Main where
 
 
+import qualified Data.Text as T
 import           Data.Version
 import           Options.Applicative
 
@@ -16,7 +17,10 @@ main = print =<< execParser opts
 
 
 opts' :: Parser PopVoxOptions
-opts' = pure PopVoxOptions
+opts' =   PopVoxOptions
+      <$> textOpt (  short 'k' <> long "api-key" <> metavar "API_KEY"
+                  <> help "The API key to use when accessing the\
+                          \ maplight.org API.")
 
 opts :: ParserInfo PopVoxOptions
 opts = info (helper <*> opts')
@@ -24,3 +28,6 @@ opts = info (helper <*> opts')
             <> progDesc "Assemble a dataset of bill positions and\
                         \ political contributions."
             <> header ("popvox-scrape v" ++ showVersion version))
+
+textOpt :: Mod OptionFields T.Text -> Parser T.Text
+textOpt = option (T.pack <$> str)

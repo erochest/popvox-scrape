@@ -7,7 +7,8 @@
 
 
 module PopVox.Types
-    ( Header
+    ( ApiKey
+    , Header
 
     , PopVoxOptions(..)
 
@@ -48,6 +49,8 @@ import           Data.Text.Lazy.Builder.Int
 import           Data.Traversable
 import           GHC.Generics
 
+
+type ApiKey = T.Text
 
 type Header = Row ByteString
 
@@ -155,4 +158,5 @@ data OrgData = Org
              }
 
 data PopVoxOptions = PopVoxOptions
-                   deriving (Show)
+                   { maplightApiKey :: ApiKey
+                   } deriving (Show)
