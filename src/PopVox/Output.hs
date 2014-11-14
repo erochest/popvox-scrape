@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wall #-}
 
 
 module PopVox.Output
     ( Header
     , writeOrgData
+    , makeHeaderRow
     ) where
 
 
@@ -17,11 +19,38 @@ import qualified Data.Conduit.List     as CL
 import           Data.CSV.Conduit
 import           Data.Hashable
 import qualified Data.HashMap.Strict   as M
+import qualified Data.HashSet          as S
+import qualified Data.List             as L
 import           Data.Monoid
 import           Data.Text.Encoding
 
 import           PopVox.Types
 
+
+makeHeaderRow :: OrgContribIndex -> OrgBillIndex -> Header
+makeHeaderRow cindex bindex = L.concat [ ["Organization"]
+                                         , contribHeaders cindex
+                                         , billHeaders bindex
+                                         , totalHeaders cindex
+                                         ]
+
+indexHeaders :: ColumnHead c => ([v] -> [c]) -> HashIndex k v -> Header
+indexHeaders f = map encodeUtf8 . L.sort . map columnValue
+               . f
+               . map snd . M.toList . unIndex
+
+contribHeaders :: OrgContribIndex -> Header
+contribHeaders = indexHeaders (S.toList . S.unions . map (getKeySet . unIndex))
+
+billHeaders :: OrgBillIndex -> Header
+billHeaders = indexHeaders (map fst . concatMap M.toList)
+
+totalHeaders :: OrgContribIndex -> Header
+totalHeaders = indexHeaders ( S.toList
+                            . S.fromList
+                            . map contribParty
+                            . L.concatMap (M.keys . unIndex)
+                            )
 
 writeOrgData :: Header -> FilePath -> [OrgData] -> IO ()
 writeOrgData header out xs =
@@ -47,7 +76,6 @@ toRow header (Org name contribs bills) =
         partyTotals :: M.HashMap BS.ByteString BS.ByteString
         partyTotals = fmap (showbs . getSum)
                     . indexIndex (columnbs . contribParty)
-                    . fmap Sum
                     $ unIndex contribs
 
 columnbs :: ColumnHead c => c -> BS.ByteString
@@ -67,3 +95,6 @@ indexMapRow = M.fromList . map (columnbs `bimap` showbs) . M.toList . unIndex
 indexMapRow' :: (ColumnHead k, Show v)
              => M.HashMap k v -> M.HashMap BS.ByteString BS.ByteString
 indexMapRow' = M.fromList . map (columnbs `bimap` showbs) . M.toList
+
+getKeySet :: (Hashable k, Eq k) => M.HashMap k v -> S.HashSet k
+getKeySet = S.fromList . M.keys
