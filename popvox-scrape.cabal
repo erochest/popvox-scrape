@@ -25,10 +25,9 @@ library
   build-depends:       base >=4.7 && <4.8
                      , bytestring
                      , text
+                     , text-format
                      , lens
-                     , wreq
                      , aeson
-                     , lens-aeson
                      , conduit
                      , resourcet
                      , conduit-extra
@@ -44,6 +43,7 @@ library
                      , bifunctors
                      , system-filepath
                      , system-fileio
+                     , scientific
   hs-source-dirs:      src
   default-language:    Haskell2010
 

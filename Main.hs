@@ -35,19 +35,21 @@ main :: IO ()
 main = do
     PopVoxOptions{..} <- execParser opts
 
-    createTree maplightCacheDir
+    createTree maplightAPIDir
 
     putStrLn "\nQuerying maplight.org...\n"
     bIndex  <-  indexBills . concat . rights
-            <$> mapM (billList maplightCacheDir mapLightUrl maplightApiKey
+            <$> mapM (billList maplightAPIDir
                         `withLog` "\tQuerying for session {}...\n"
                      ) sessions
+    dumpBillIndex bIndex
 
     F.print "\nReading contributor data from {}...\n"
         . Only $ encodeString maplightDataDir
     ocIndex <-  fmap mconcat
             .   mapM (readIndexContribs `withLog` "\tReading input file {}...\n")
             =<< listDirectory maplightDataDir
+    dumpContribIndex ocIndex
 
     F.print "\nWriting data to {}...\n" $ Only outputFile
     writeOrgData (makeHeaderRow ocIndex bIndex)
@@ -70,18 +72,15 @@ instance Buildable FilePath where
 
 opts' :: Parser PopVoxOptions
 opts' =   PopVoxOptions
-      <$> textOpt (  short 'k' <> long "api-key" <> metavar "API_KEY"
-                  <> help "The API key to use when accessing the\
-                          \ maplight.org API.")
-      <*> fileOption (  short 'd' <> long "data-dir" <> value "./data"
+      <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
                      <> metavar "MAPLIGHT_DATA_DIR"
                      <> help "The directory containing the contribution\
                              \ data. Defaults to './data'.")
-      <*> fileOption (  short 'c' <> long "cache-dir"
-                     <> metavar "MAPLIGHT_CACHE_DIR"
-                     <> value "./.maplight-cache"
-                     <> help "A directory to cache API responses in.\
-                             \ Defaults to './.maplight-cache'.")
+      <*> fileOption (  short 'c' <> long "api-dir"
+                     <> metavar "MAPLIGHT_API_DIR"
+                     <> value "./maplight-cache"
+                     <> help "A directory containing API responses.\
+                             \ Defaults to './maplight-cache'.")
       <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
                      <> help "The file to write the output to.")
 

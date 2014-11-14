@@ -1,19 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
+{-# OPTIONS_GHC -Wall #-}
 
 
 module PopVox.MapLight
-    ( mapLightUrl
-    , billList
+    ( billList
     , readContribsC
     , indexContribsC
     , readIndexContribs
     , indexBills
     , toData
+    , dumpBillIndex
+    , dumpContribIndex
     ) where
 
 
 import           Control.Applicative
-import           Control.Lens                 hiding ((<.>))
+import           Control.Monad
 import           Control.Monad.Trans.Resource (MonadResource)
 import           Data.Aeson
 import qualified Data.ByteString.Lazy         as B
@@ -21,45 +24,29 @@ import           Data.Conduit
 import           Data.Conduit.Binary
 import qualified Data.Conduit.List            as CL
 import           Data.CSV.Conduit
-import           Data.CSV.Conduit.Conversion
+import           Data.CSV.Conduit.Conversion  hiding ((.:))
 import           Data.Foldable
 import qualified Data.HashMap.Strict          as M
 import qualified Data.List                    as L
 import           Data.Monoid
 import           Data.Ord
-import qualified Data.Text                    as T
-import           Filesystem
-import           Filesystem.Path.CurrentOS
-import           Network.Wreq
+import           Filesystem.Path.CurrentOS    hiding (encode)
 import           Prelude                      hiding (FilePath)
 
 import           PopVox.Types
 
 
-mapLightUrl :: String
-mapLightUrl = "http://maplight.org/services_open_api"
+data BillWrapper = BillWrapper { bills :: [BillInfo] }
 
-billList :: FilePath -> String -> ApiKey -> Session
-         -> IO (Either String [BillInfo])
-billList cacheDir apiUrl apiKey session = do
-    exists <- isFile cacheFile
-    body   <- if exists
-                  then B.readFile $ encodeString cacheFile
-                  else download
-    return $ eitherDecode' body
+instance FromJSON BillWrapper where
+    parseJSON (Object o) = BillWrapper <$> o .: "bills"
+    parseJSON _          = mzero
 
-    where
-        cacheFile = cacheDir </> decodeString (show session) <.> "json"
-        download = do
-            body <-  (^. responseBody)
-                 <$> getWith opts (apiUrl ++ "/map.bill_positions_v1.json")
-            B.writeFile (encodeString cacheFile) body
-            return body
-        opts = defaults & param "apikey"                .~ [apiKey]
-                        & param "jurisdiction"          .~ ["us"]
-                        & param "session"               .~ [T.pack (show session)]
-                        & param "include_organizations" .~ ["1"]
-                        & param "has_organizations"     .~ ["0"]
+billList :: FilePath -> Session -> IO (Either String [BillInfo])
+billList dataDir session =
+    fmap bills . eitherDecode' <$> B.readFile
+                               (   encodeString
+                               $   dataDir </> decodeString (show session) <.> "json")
 
 indexBills :: [BillInfo] -> OrgBillIndex
 indexBills = HashIndex . foldMap go
@@ -86,3 +73,23 @@ toData (HashIndex billIndex) (HashIndex contribIndex) =
     where
         toOrgData :: (OrgName, BillIndex) -> OrgData
         toOrgData (n, b) = Org n (fold $ M.lookup n contribIndex) b
+
+dumpBillIndex :: OrgBillIndex -> IO ()
+dumpBillIndex = dump "bill-index.json" spreadOrg
+    where
+        spreadOrg (name, bindex) = map (name,) $ M.toList bindex
+
+dumpContribIndex :: OrgContribIndex -> IO ()
+dumpContribIndex = dump "contrib-index.json" spreadOrg
+    where
+        spreadOrg (name, cindex) = map (name,)
+                                 . M.toList
+                                 . fmap getSum
+                                 $ unIndex cindex
+
+dump :: ToJSON b => FilePath -> ((k, v) -> [b]) -> HashIndex k v -> IO ()
+dump fname f = B.writeFile (encodeString fname)
+             . encode
+             . L.concatMap f
+             . M.toList
+             . unIndex

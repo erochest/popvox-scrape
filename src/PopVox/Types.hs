@@ -25,8 +25,8 @@ module PopVox.Types
     , Disposition(..)
 
     , BillType(..)
-    , Session
-    , BillNo
+    , Session(..)
+    , BillNo(..)
     , Bill(..)
     , Position
     , BillIndex
@@ -46,7 +46,9 @@ import           Control.Applicative
 import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson
+import           Data.Aeson.Types            (defaultOptions)
 import           Data.ByteString             (ByteString)
+import           Data.Char                   (isDigit)
 import           Data.CSV.Conduit            (Row)
 import           Data.CSV.Conduit.Conversion hiding ((.:))
 import qualified Data.CSV.Conduit.Conversion as CSV
@@ -55,9 +57,11 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict         as M
 import           Data.Monoid
 import qualified Data.Text                   as T
+import           Data.Text.Buildable
 import qualified Data.Text.Lazy              as TL
 import qualified Data.Text.Lazy.Builder      as B
 import           Data.Text.Lazy.Builder.Int
+import qualified Data.Text.Read              as TR
 import           Data.Traversable
 import           Filesystem.Path.CurrentOS
 import           GHC.Generics
@@ -70,9 +74,45 @@ type Header = Row ByteString
 
 type OrgName  = T.Text
 type Year     = Int
-type Session  = Int
-type BillNo   = Int
 type Position = Int
+
+newtype Session  = Session { getSession :: Int }
+                   deriving (Eq, Enum, Real, Integral, Num, Ord, Generic)
+
+instance Hashable Session
+
+instance Show Session where
+    show (Session s) = show s
+
+parseInt :: Monad m => T.Text -> m Int
+parseInt t = case TR.decimal t of
+                 Right (n, "") -> return n
+                 Right (_, xs) -> fail . T.unpack $ "Extra characters: " <> xs
+                 Left err      -> fail err
+
+instance FromJSON Session where
+    parseJSON (Number s) = pure $ truncate s
+    parseJSON (String s) = Session <$> parseInt s
+    parseJSON s          = fail $ "Invalid Session: " ++ show s
+
+instance ToJSON Session where
+    toJSON = Number . fromIntegral . getSession
+
+instance Buildable Session where
+    build (Session s) = build s
+
+newtype BillNo   = BillNo { getBillNo :: Int }
+                   deriving (Show, Eq, Enum, Real, Integral, Num, Ord, Generic)
+
+instance Hashable BillNo
+
+instance FromJSON BillNo where
+    parseJSON (Number s) = pure $ truncate s
+    parseJSON (String s) = BillNo <$> parseInt s
+    parseJSON s          = fail $ "Invalid BillNo: " ++ show s
+
+instance ToJSON BillNo where
+    toJSON = Number . fromIntegral . getBillNo
 
 type ContribIndex    = HashIndex ContribEntry (Sum Int)
 type BillIndex       = M.HashMap Bill Disposition
@@ -110,11 +150,14 @@ instance ColumnHead Party where
 instance FromField Party where
     parseField "Democratic" = pure Dem
     parseField "Republican" = pure GOP
-    parseField _            = mzero
+    parseField p            = fail $ "Invalid Party: " ++ show p
 
 instance ToField Party where
     toField Dem = "Democratic"
     toField GOP = "Republican"
+
+instance ToJSON Party where
+    toJSON = genericToJSON defaultOptions
 
 
 data ContribType = Contribution
@@ -137,6 +180,9 @@ instance ColumnHead ContribType where
     columnValue   Contribution = ""
     columnBuilder Expenditure  = "Ind"
     columnBuilder Contribution = ""
+
+instance ToJSON ContribType where
+    toJSON = genericToJSON defaultOptions
 
 
 data ContribEntry = Contrib
@@ -171,9 +217,12 @@ instance ToNamedRecord ContribEntry where
                     , "ElectionCycle"           CSV..= toField y
                     ]
 
+instance ToJSON ContribEntry where
+    toJSON = genericToJSON defaultOptions
+
+
 data OrgContrib = OrgContrib !OrgName !ContribEntry
                 deriving (Show, Eq)
-
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
@@ -195,7 +244,7 @@ data BillType = House
               | SenateResolution
               | SenateJoint
               | SenateConcurrent
-              deriving (Eq, Enum, Bounded, Ord, Generic)
+              deriving (Eq, Show, Enum, Bounded, Ord, Generic)
 
 instance Hashable BillType
 
@@ -220,40 +269,59 @@ instance ColumnHead BillType where
     columnBuilder   SenateConcurrent = "SC"
 
 instance FromJSON BillType where
+    parseJSON (String "H")  = return House
     parseJSON (String "h")  = return House
+    parseJSON (String "HR") = return HouseResolution
     parseJSON (String "hr") = return HouseResolution
+    parseJSON (String "HJ") = return HouseJoint
     parseJSON (String "hj") = return HouseJoint
+    parseJSON (String "HC") = return HouseConcurrent
     parseJSON (String "hc") = return HouseConcurrent
+    parseJSON (String "S")  = return Senate
     parseJSON (String "s")  = return Senate
+    parseJSON (String "SR") = return SenateResolution
     parseJSON (String "sr") = return SenateResolution
+    parseJSON (String "SJ") = return SenateJoint
     parseJSON (String "sj") = return SenateJoint
+    parseJSON (String "SC") = return SenateResolution
     parseJSON (String "sc") = return SenateResolution
-    parseJSON _             = mzero
+    parseJSON b             = fail $ "Invalid BillType: " ++ show b
+
+instance ToJSON BillType where
+    toJSON = genericToJSON defaultOptions
 
 
 data Disposition = Support
+                 | Neutral
                  | Oppose
-                 deriving (Show, Eq)
+                 deriving (Show, Eq, Generic)
 
 instance Enum Disposition where
     toEnum n | n < 0     = Oppose
+             | n == 0    = Neutral
              | n > 0     = Support
              | otherwise = error $ "Invalid enum for Disposition: " ++ show n
 
     fromEnum Support = 1
+    fromEnum Neutral = 0
     fromEnum Oppose  = -1
 
 instance FromJSON Disposition where
     parseJSON (String "support") = pure Support
+    parseJSON (String "Null")    = pure Neutral
     parseJSON (String "oppose")  = pure Oppose
-    parseJSON _                  = mzero
+    parseJSON Null               = pure Neutral
+    parseJSON d                  = fail $ "Invalid Disposition: " ++ show d
+
+instance ToJSON Disposition where
+    toJSON = genericToJSON defaultOptions
 
 
 data Bill = Bill
           { billNo      :: !BillNo
           , billType    :: !BillType
           , billSession :: !Session
-          } deriving (Eq, Ord, Generic)
+          } deriving (Eq, Ord, Show, Generic)
 
 instance Hashable Bill
 
@@ -262,7 +330,7 @@ instance FromJSON Bill where
                          <$> o .: "number"
                          <*> o .: "prefix"
                          <*> o .: "session"
-    parseJSON _          = mzero
+    parseJSON b          = fail $ "Invalid Bill: " ++ show b
 
 instance ColumnHead Bill where
     columnBuilder (Bill n ch cong) = mconcat [ columnBuilder ch
@@ -272,22 +340,27 @@ instance ColumnHead Bill where
                                              , B.singleton ')'
                                              ]
 
+instance ToJSON Bill where
+    toJSON = genericToJSON defaultOptions
+
 
 data OrgInfo  = OrgInfo !OrgName !Disposition
+              deriving (Show)
 
 instance FromJSON OrgInfo where
     parseJSON (Object o) =   OrgInfo
                          <$> o .: "name"
                          <*> o .: "disposition"
-    parseJSON _          = mzero
+    parseJSON o          = fail $ "Invalid OrgInfo: " ++ show o
 
 data BillInfo = BillInfo !Bill ![OrgInfo]
+              deriving (Show)
 
 instance FromJSON BillInfo where
     parseJSON v@(Object o) =   BillInfo
                            <$> parseJSON v
                            <*> o .: "organizations"
-    parseJSON _            = mzero
+    parseJSON b            = fail $ "Invalid BillInfo: " ++ show b
 
 
 data OrgData = Org
@@ -297,8 +370,7 @@ data OrgData = Org
              }
 
 data PopVoxOptions = PopVoxOptions
-                   { maplightApiKey   :: !ApiKey
-                   , maplightDataDir  :: !FilePath
-                   , maplightCacheDir :: !FilePath
-                   , outputFile       :: !FilePath
+                   { maplightDataDir :: !FilePath
+                   , maplightAPIDir  :: !FilePath
+                   , outputFile      :: !FilePath
                    } deriving (Show)

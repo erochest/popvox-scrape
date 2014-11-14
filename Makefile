@@ -12,7 +12,7 @@ test: build
 	cabal test --test-option=--color
 
 run:
-	cabal run -- --api-key ${MAPLIGHT_APIKEY} --data-dir data --output maplight-data.csv
+	cabal run -- --data-dir data --output maplight-data.csv
 
 # docs:
 # generate api documentation
