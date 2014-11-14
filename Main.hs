@@ -35,17 +35,19 @@ main :: IO ()
 main = do
     PopVoxOptions{..} <- execParser opts
 
-    F.print "\nReading contributor data from {}...\n"
-        . Only $ encodeString maplightDataDir
-    ocIndex <-  fmap mconcat
-            .   mapM (readIndexContribs `withLog` "\tReading input file {}...\n")
-            =<< listDirectory maplightDataDir
+    createTree maplightCacheDir
 
     putStrLn "\nQuerying maplight.org...\n"
     bIndex  <-  indexBills . concat . rights
             <$> mapM (billList maplightCacheDir mapLightUrl maplightApiKey
                         `withLog` "\tQuerying for session {}...\n"
                      ) sessions
+
+    F.print "\nReading contributor data from {}...\n"
+        . Only $ encodeString maplightDataDir
+    ocIndex <-  fmap mconcat
+            .   mapM (readIndexContribs `withLog` "\tReading input file {}...\n")
+            =<< listDirectory maplightDataDir
 
     F.print "\nWriting data to {}...\n" $ Only outputFile
     writeOrgData (makeHeaderRow ocIndex bIndex)
