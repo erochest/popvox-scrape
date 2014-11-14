@@ -13,9 +13,10 @@ module PopVox.MapLight
 
 
 import           Control.Applicative
-import           Control.Lens
+import           Control.Lens                 hiding ((<.>))
 import           Control.Monad.Trans.Resource (MonadResource)
 import           Data.Aeson
+import qualified Data.ByteString.Lazy         as B
 import           Data.Conduit
 import           Data.Conduit.Binary
 import qualified Data.Conduit.List            as CL
@@ -27,6 +28,7 @@ import qualified Data.List                    as L
 import           Data.Monoid
 import           Data.Ord
 import qualified Data.Text                    as T
+import           Filesystem
 import           Filesystem.Path.CurrentOS
 import           Network.Wreq
 import           Prelude                      hiding (FilePath)
@@ -37,12 +39,22 @@ import           PopVox.Types
 mapLightUrl :: String
 mapLightUrl = "http://maplight.org/services_open_api"
 
--- TODO: cache results
-billList :: String -> ApiKey -> Session -> IO (Either String [BillInfo])
-billList apiUrl apiKey session =
-        eitherDecode' . (^. responseBody)
-    <$> getWith opts (apiUrl ++ "/map.bill_positions_v1.json")
+billList :: FilePath -> String -> ApiKey -> Session
+         -> IO (Either String [BillInfo])
+billList cacheDir apiUrl apiKey session = do
+    exists <- isFile cacheFile
+    body   <- if exists
+                  then B.readFile $ encodeString cacheFile
+                  else download
+    return $ eitherDecode' body
+
     where
+        cacheFile = cacheDir </> decodeString (show session) <.> "json"
+        download = do
+            body <-  (^. responseBody)
+                 <$> getWith opts (apiUrl ++ "/map.bill_positions_v1.json")
+            B.writeFile (encodeString cacheFile) body
+            return body
         opts = defaults & param "apikey"                .~ [apiKey]
                         & param "jurisdiction"          .~ ["us"]
                         & param "session"               .~ [T.pack (show session)]
