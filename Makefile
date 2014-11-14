@@ -1,5 +1,6 @@
 
 MAPLIGHT_APIKEY=
+CURL_OPTS=--max-time 90
 
 all: init test docs package
 
@@ -54,19 +55,19 @@ rebuild: clean configure build
 
 zips/contributions-2008.zip:
 	mkdir -p zips
-	curl -o zips/contributions-2008.zip http://data.maplight.org/US/2008/records/cand.zip
+	curl ${CURL_OPTS} -o zips/contributions-2008.zip http://data.maplight.org/US/2008/records/cand.zip
 
 zips/contributions-2010.zip:
 	mkdir -p zips
-	curl -o zips/contributions-2010.zip http://data.maplight.org/US/2010/records/cand.zip
+	curl ${CURL_OPTS} -o zips/contributions-2010.zip http://data.maplight.org/US/2010/records/cand.zip
 
 zips/contributions-2012.zip:
 	mkdir -p zips
-	curl -o zips/contributions-2012.zip http://data.maplight.org/US/2012/records/cand.zip
+	curl ${CURL_OPTS} -o zips/contributions-2012.zip http://data.maplight.org/US/2012/records/cand.zip
 
 zips/contributions-2014.zip:
 	mkdir -p zips
-	curl -o zips/contributions-2014.zip http://data.maplight.org/US/2014/records/cand.zip
+	curl ${CURL_OPTS} -o zips/contributions-2014.zip http://data.maplight.org/US/2014/records/cand.zip
 
 download-contributions: zips/contributions-2008.zip zips/contributions-2010.zip zips/contributions-2012.zip zips/contributions-2014.zip
 
@@ -90,19 +91,19 @@ unzip-contributions: data/2008_cand.csv data/2010_cand.csv data/2012_cand.csv da
 
 .maplight-cache/109.json:
 	mkdir -p .maplight-cache
-	curl -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=109&include_organizations=1&has_organizations=0'
+	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=109&include_organizations=1&has_organizations=0'
 
 .maplight-cache/110.json:
 	mkdir -p .maplight-cache
-	curl -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=110&include_organizations=1&has_organizations=0'
+	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=110&include_organizations=1&has_organizations=0'
 
 .maplight-cache/111.json:
 	mkdir -p .maplight-cache
-	curl -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=111&include_organizations=1&has_organizations=0'
+	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=111&include_organizations=1&has_organizations=0'
 
 .maplight-cache/112.json:
 	mkdir -p .maplight-cache
-	curl -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=112&include_organizations=1&has_organizations=0'
+	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=112&include_organizations=1&has_organizations=0'
 
 maplight-api: .maplight-cache/109.json .maplight-cache/110.json .maplight-cache/111.json .maplight-cache/112.json 
 
