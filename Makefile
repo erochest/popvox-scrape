@@ -88,4 +88,7 @@ data/2014_cand.csv: zips/contributions-2014.zip
 
 unzip-contributions: data/2008_cand.csv data/2010_cand.csv data/2012_cand.csv data/2014_cand.csv
 
+clear-cache:
+	-rm -rf .maplight-cache
+
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
