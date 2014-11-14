@@ -1,4 +1,6 @@
 
+MAPLIGHT_APIKEY=
+
 all: init test docs package
 
 init:
@@ -9,7 +11,7 @@ test: build
 	cabal test --test-option=--color
 
 run:
-	cabal run -- --help
+	cabal run -- --api-key ${MAPLIGHT_APIKEY} --data-dir data --output maplight-data.csv
 
 # docs:
 # generate api documentation
