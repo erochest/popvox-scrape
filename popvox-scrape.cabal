@@ -53,6 +53,7 @@ executable popvox-scrape
   build-depends:       base >=4.7 && <4.8
                      , popvox-scrape
                      , text
+                     , text-format
                      , optparse-applicative
                      , errors
                      , mtl

@@ -1,13 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 
 module Main where
 
 
 import           Control.Error
+import           Control.Monad             ((<=<))
 import           Data.Monoid
 import qualified Data.Text                 as T
+import           Data.Text.Buildable
+import           Data.Text.Format
+import qualified Data.Text.Format          as F
+import           Data.Text.Lazy.Builder    as B
 import           Data.Traversable
 import           Data.Version
 import           Filesystem
@@ -17,6 +23,7 @@ import           Prelude                   hiding (FilePath, mapM)
 
 import           Paths_popvox_scrape
 import           PopVox.MapLight
+import           PopVox.Output
 import           PopVox.Types
 
 
@@ -24,17 +31,36 @@ sessions :: [Session]
 sessions = [109, 110, 111, 112]
 
 
--- TODO: Need to progress messages....
 main :: IO ()
 main = do
-    pv@PopVoxOptions{..} <- execParser opts
+    PopVoxOptions{..} <- execParser opts
+
+    F.print "Reading contributor data from {}..."
+        . Only $ encodeString maplightDataDir
     ocIndex <-  fmap mconcat
-            .   mapM readIndexContribs
+            .   mapM (readIndexContribs <=< log' "\tReading input file {}...")
             =<< listDirectory maplightDataDir
+
+    putStrLn "Querying maplight.org..."
     bIndex  <-  indexBills . concat . rights
-            <$> mapM (billList mapLightUrl maplightApiKey) sessions
-    let orgs = toData bIndex ocIndex
-    undefined
+            <$> mapM (   billList mapLightUrl maplightApiKey
+                     <=< log' "\tQuerying for session {}..."
+                     ) sessions
+
+    F.print "Writing data to {}..." $ Only outputFile
+    writeOrgData (makeHeaderRow ocIndex bIndex)
+                 (encodeString outputFile)
+                 (toData bIndex ocIndex)
+
+    putStrLn "done"
+
+
+log' :: Buildable a => F.Format -> a -> IO a
+log' f x = F.print f (Only x) >> return x
+
+
+instance Buildable FilePath where
+    build = B.fromString . encodeString
 
 
 opts' :: Parser PopVoxOptions

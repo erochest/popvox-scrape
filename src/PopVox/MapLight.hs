@@ -37,6 +37,7 @@ import           PopVox.Types
 mapLightUrl :: String
 mapLightUrl = "http://maplight.org/services_open_api"
 
+-- TODO: cache results
 billList :: String -> ApiKey -> Session -> IO (Either String [BillInfo])
 billList apiUrl apiKey session =
         eitherDecode' . (^. responseBody)
