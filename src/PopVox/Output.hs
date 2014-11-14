@@ -7,7 +7,6 @@ module PopVox.Output
     ) where
 
 
-import           Data.Hashable
 import           Control.Monad
 import           Data.Bifunctor
 import qualified Data.ByteString       as BS
@@ -16,6 +15,7 @@ import           Data.Conduit
 import           Data.Conduit.Binary
 import qualified Data.Conduit.List     as CL
 import           Data.CSV.Conduit
+import           Data.Hashable
 import qualified Data.HashMap.Strict   as M
 import           Data.Monoid
 import           Data.Text.Encoding
@@ -39,7 +39,7 @@ toRow :: Header -> OrgData -> Row BS.ByteString
 toRow header (Org name contribs bills) =
     let rowMap = M.unions [ M.singleton "Organization" (encodeUtf8 name)
                           , indexMapRow contribs
-                          , indexMapRow bills
+                          , indexMapRow' bills
                           , partyTotals
                           ]
     in  map (\k -> M.lookupDefault "" k rowMap) header
@@ -63,3 +63,7 @@ indexIndex f = M.fromListWith mappend . map (first f) . M.toList
 indexMapRow :: (ColumnHead k, Show v)
             => HashIndex k v -> M.HashMap BS.ByteString BS.ByteString
 indexMapRow = M.fromList . map (columnbs `bimap` showbs) . M.toList . unIndex
+
+indexMapRow' :: (ColumnHead k, Show v)
+             => M.HashMap k v -> M.HashMap BS.ByteString BS.ByteString
+indexMapRow' = M.fromList . map (columnbs `bimap` showbs) . M.toList

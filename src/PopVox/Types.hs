@@ -35,6 +35,9 @@ module PopVox.Types
     , BillInfo(..)
 
     , OrgData(..)
+    , OrgContrib(..)
+    , OrgBillIndex
+    , OrgContribIndex
 
     ) where
 
@@ -56,7 +59,9 @@ import qualified Data.Text.Lazy              as TL
 import qualified Data.Text.Lazy.Builder      as B
 import           Data.Text.Lazy.Builder.Int
 import           Data.Traversable
+import           Filesystem.Path.CurrentOS
 import           GHC.Generics
+import           Prelude                     hiding (FilePath)
 
 
 type ApiKey = T.Text
@@ -69,8 +74,10 @@ type Session  = Int
 type BillNo   = Int
 type Position = Int
 
-type ContribIndex = HashIndex ContribEntry Int
-type BillIndex    = HashIndex Bill Int
+type ContribIndex    = HashIndex ContribEntry (Sum Int)
+type BillIndex       = M.HashMap Bill Disposition
+type OrgBillIndex    = HashIndex OrgName BillIndex
+type OrgContribIndex = HashIndex OrgName ContribIndex
 
 
 class ColumnHead c where
@@ -164,6 +171,21 @@ instance ToNamedRecord ContribEntry where
                     , "ElectionCycle"           CSV..= toField y
                     ]
 
+data OrgContrib = OrgContrib !OrgName !ContribEntry
+                deriving (Show, Eq)
+
+
+instance FromNamedRecord OrgContrib where
+    parseNamedRecord m =   OrgContrib
+                       <$> m CSV..: "DonorNameNormalized"
+                       <*> parseNamedRecord m
+
+instance ToNamedRecord OrgContrib where
+    toNamedRecord (OrgContrib n c) =
+        namedRecord [ "DonorNameNormalized" CSV..= toField n
+                    ]
+        <> toNamedRecord c
+
 
 data BillType = House
               | HouseResolution
@@ -174,6 +196,8 @@ data BillType = House
               | SenateJoint
               | SenateConcurrent
               deriving (Eq, Enum, Bounded, Ord, Generic)
+
+instance Hashable BillType
 
 instance ColumnHead BillType where
 
@@ -230,6 +254,8 @@ data Bill = Bill
           , billType    :: !BillType
           , billSession :: !Session
           } deriving (Eq, Ord, Generic)
+
+instance Hashable Bill
 
 instance FromJSON Bill where
     parseJSON (Object o) =   Bill
