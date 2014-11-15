@@ -48,7 +48,6 @@ import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types            (defaultOptions)
 import           Data.ByteString             (ByteString)
-import           Data.Char                   (isDigit)
 import           Data.CSV.Conduit            (Row)
 import           Data.CSV.Conduit.Conversion hiding ((.:))
 import qualified Data.CSV.Conduit.Conversion as CSV

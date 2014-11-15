@@ -7,7 +7,6 @@ module Main where
 
 
 import           Control.Error
-import           Control.Monad             ((<=<))
 import           Data.Monoid
 import qualified Data.Text                 as T
 import           Data.Text.Buildable
