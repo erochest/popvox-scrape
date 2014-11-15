@@ -67,8 +67,8 @@ prepend x = yield x >> go
 toRow :: Header -> OrgData -> Row BS.ByteString
 toRow header (Org name contribs bills) =
     let rowMap = M.unions [ M.singleton "Organization" (encodeUtf8 name)
-                          , indexMapRow contribs
-                          , indexMapRow' bills
+                          , indexContribs contribs
+                          , indexBills bills
                           , partyTotals
                           ]
     in  map (\k -> M.lookupDefault "" k rowMap) header
@@ -88,13 +88,13 @@ indexIndex :: (Eq k2, Hashable k2, Monoid v)
            => (k1 -> k2) -> M.HashMap k1 v -> M.HashMap k2 v
 indexIndex f = M.fromListWith mappend . map (first f) . M.toList
 
-indexMapRow :: (ColumnHead k, Show v)
-            => HashIndex k v -> M.HashMap BS.ByteString BS.ByteString
-indexMapRow = M.fromList . map (columnbs `bimap` showbs) . M.toList . unIndex
+indexContribs :: (ColumnHead k, Show v)
+              => HashIndex k v -> M.HashMap BS.ByteString BS.ByteString
+indexContribs = M.fromList . map (columnbs `bimap` showbs) . M.toList . unIndex
 
-indexMapRow' :: (ColumnHead k, Show v)
-             => M.HashMap k v -> M.HashMap BS.ByteString BS.ByteString
-indexMapRow' = M.fromList . map (columnbs `bimap` showbs) . M.toList
+indexBills :: (ColumnHead k, Enum v)
+           => M.HashMap k v -> M.HashMap BS.ByteString BS.ByteString
+indexBills = M.fromList . map (columnbs `bimap` (showbs . fromEnum)) . M.toList
 
 getKeySet :: (Hashable k, Eq k) => M.HashMap k v -> S.HashSet k
 getKeySet = S.fromList . M.keys
