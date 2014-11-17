@@ -23,6 +23,7 @@ module PopVox.Types
     , ContribType(..)
     , ContribEntry(..)
     , ContribIndex
+    , ContribIndex'
     , Disposition(..)
 
     , BillType(..)
@@ -39,6 +40,7 @@ module PopVox.Types
     , OrgContrib(..)
     , OrgBillIndex
     , OrgContribIndex
+    , OrgContribIndex'
 
     ) where
 
@@ -116,10 +118,12 @@ instance FromJSON BillNo where
 instance ToJSON BillNo where
     toJSON = Number . fromIntegral . getBillNo
 
-type ContribIndex    = HashIndex ContribEntry (Sum Int)
-type BillIndex       = M.HashMap Bill Disposition
-type OrgBillIndex    = HashIndex OrgName BillIndex
-type OrgContribIndex = HashIndex OrgName ContribIndex
+type ContribIndex     = HashIndex ContribEntry (Sum Int)
+type ContribIndex'    = HashIndex ContribEntry Int
+type BillIndex        = M.HashMap Bill Disposition
+type OrgBillIndex     = HashIndex OrgName BillIndex
+type OrgContribIndex  = HashIndex OrgName ContribIndex
+type OrgContribIndex' = HashIndex OrgName ContribIndex'
 
 
 class ColumnHead c where

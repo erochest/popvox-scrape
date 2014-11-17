@@ -30,10 +30,13 @@ import           PopVox.Types
 
 makeHeaderRow :: OrgContribIndex -> OrgBillIndex -> Header
 makeHeaderRow cindex bindex = L.concat [ ["Organization"]
-                                         , sortHeaders (contribHeaders cindex)
+                                         , sortHeaders (contribHeaders cindex')
                                          , sortHeaders (billHeaders bindex)
-                                         , sortHeaders (totalHeaders cindex)
+                                         , sortHeaders (totalHeaders cindex')
                                          ]
+    where
+        cindex' :: OrgContribIndex'
+        cindex' = fmap (fmap getSum) cindex
 
 sortHeaders :: HeaderSet -> Header
 sortHeaders = L.sortBy (comparing decodeUtf8) . S.toList
@@ -43,13 +46,13 @@ indexHeaders f = S.map (encodeUtf8 . columnValue)
                . f
                . map snd . M.toList . unIndex
 
-contribHeaders :: OrgContribIndex -> HeaderSet
+contribHeaders :: OrgContribIndex' -> HeaderSet
 contribHeaders = indexHeaders (S.unions . map (getKeySet . unIndex))
 
 billHeaders :: OrgBillIndex -> HeaderSet
 billHeaders = indexHeaders (S.fromList . map fst . concatMap M.toList)
 
-totalHeaders :: OrgContribIndex -> HeaderSet
+totalHeaders :: OrgContribIndex' -> HeaderSet
 totalHeaders = indexHeaders ( S.fromList
                             . map contribParty
                             . L.concatMap (M.keys . unIndex)
