@@ -22,6 +22,7 @@ import qualified Data.HashMap.Strict   as M
 import qualified Data.HashSet          as S
 import qualified Data.List             as L
 import           Data.Monoid
+import           Data.Ord
 import           Data.Text.Encoding
 
 import           PopVox.Types
@@ -29,25 +30,27 @@ import           PopVox.Types
 
 makeHeaderRow :: OrgContribIndex -> OrgBillIndex -> Header
 makeHeaderRow cindex bindex = L.concat [ ["Organization"]
-                                         , contribHeaders cindex
-                                         , billHeaders bindex
-                                         , totalHeaders cindex
+                                         , sortHeaders (contribHeaders cindex)
+                                         , sortHeaders (billHeaders bindex)
+                                         , sortHeaders (totalHeaders cindex)
                                          ]
 
-indexHeaders :: ColumnHead c => ([v] -> [c]) -> HashIndex k v -> Header
-indexHeaders f = map encodeUtf8 . L.sort . map columnValue
+sortHeaders :: HeaderSet -> Header
+sortHeaders = L.sortBy (comparing decodeUtf8) . S.toList
+
+indexHeaders :: ColumnHead c => ([v] -> S.HashSet c) -> HashIndex k v -> HeaderSet
+indexHeaders f = S.map (encodeUtf8 . columnValue)
                . f
                . map snd . M.toList . unIndex
 
-contribHeaders :: OrgContribIndex -> Header
-contribHeaders = indexHeaders (S.toList . S.unions . map (getKeySet . unIndex))
+contribHeaders :: OrgContribIndex -> HeaderSet
+contribHeaders = indexHeaders (S.unions . map (getKeySet . unIndex))
 
-billHeaders :: OrgBillIndex -> Header
-billHeaders = indexHeaders (map fst . concatMap M.toList)
+billHeaders :: OrgBillIndex -> HeaderSet
+billHeaders = indexHeaders (S.fromList . map fst . concatMap M.toList)
 
-totalHeaders :: OrgContribIndex -> Header
-totalHeaders = indexHeaders ( S.toList
-                            . S.fromList
+totalHeaders :: OrgContribIndex -> HeaderSet
+totalHeaders = indexHeaders ( S.fromList
                             . map contribParty
                             . L.concatMap (M.keys . unIndex)
                             )
