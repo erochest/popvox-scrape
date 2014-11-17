@@ -111,23 +111,29 @@ clear-cache:
 	-rm -rf maplight-cache
 
 bills/109/bills:
+	mkdir -p bills/109
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills bills/109
 
 bills/110/bills:
+	mkdir -p bills/110
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/110/bills bills/110
 
 bills/111/bills:
+	mkdir -p bills/111
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills bills/111
 
 bills/112/bills:
+	mkdir -p bills/112
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/112/bills bills/112
 
 bills/113/bills:
+	mkdir -p bills/113
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/113/bills bills/113
 
 bills/114/bills:
+	mkdir -p bills/114
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/114/bills bills/114
 
-govtrackdata: bills/109/bills bills/110/bills bills/111/bills bills/112/bills bills/113/bills bills/114/bills
+govtrackdata: bills/109/bills bills/110/bills bills/111/bills bills/112/bills bills/113/bills
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
