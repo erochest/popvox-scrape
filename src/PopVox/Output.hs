@@ -30,13 +30,10 @@ import           PopVox.Types
 
 makeHeaderRow :: OrgContribIndex -> OrgBillIndex -> Header
 makeHeaderRow cindex bindex = L.concat [ ["Organization"]
-                                         , sortHeaders (contribHeaders cindex')
+                                         , sortHeaders (contribHeaders cindex)
                                          , sortHeaders (billHeaders bindex)
-                                         , sortHeaders (totalHeaders cindex')
+                                         , sortHeaders (totalHeaders cindex)
                                          ]
-    where
-        cindex' :: OrgContribIndex'
-        cindex' = fmap (fmap getSum) cindex
 
 sortHeaders :: HeaderSet -> Header
 sortHeaders = L.sortBy (comparing decodeUtf8) . S.toList
@@ -46,13 +43,13 @@ indexHeaders f = S.map (encodeUtf8 . columnValue)
                . f
                . map snd . M.toList . unIndex
 
-contribHeaders :: OrgContribIndex' -> HeaderSet
+contribHeaders :: OrgContribIndex -> HeaderSet
 contribHeaders = indexHeaders (S.unions . map (getKeySet . unIndex))
 
 billHeaders :: OrgBillIndex -> HeaderSet
 billHeaders = indexHeaders (S.fromList . map fst . concatMap M.toList)
 
-totalHeaders :: OrgContribIndex' -> HeaderSet
+totalHeaders :: OrgContribIndex -> HeaderSet
 totalHeaders = indexHeaders ( S.fromList
                             . map contribParty
                             . L.concatMap (M.keys . unIndex)
@@ -73,7 +70,7 @@ prepend x = yield x >> go
 toRow :: Header -> OrgData -> Row BS.ByteString
 toRow header (Org name contribs bills) =
     let rowMap = M.unions [ M.singleton "Organization" (encodeUtf8 name)
-                          , indexContribs contribs
+                          , indexContribs $ fmap getSum contribs
                           , indexBills bills
                           , partyTotals
                           ]
@@ -94,12 +91,10 @@ indexIndex :: (Eq k2, Hashable k2, Monoid v)
            => (k1 -> k2) -> M.HashMap k1 v -> M.HashMap k2 v
 indexIndex f = M.fromListWith mappend . map (first f) . M.toList
 
-indexContribs :: (ColumnHead k, Show v)
-              => HashIndex k v -> M.HashMap BS.ByteString BS.ByteString
+indexContribs :: ContribIndex' -> M.HashMap BS.ByteString BS.ByteString
 indexContribs = M.fromList . map (columnbs `bimap` showbs) . M.toList . unIndex
 
-indexBills :: (ColumnHead k, Enum v)
-           => M.HashMap k v -> M.HashMap BS.ByteString BS.ByteString
+indexBills :: BillIndex -> M.HashMap BS.ByteString BS.ByteString
 indexBills = M.fromList . map (columnbs `bimap` (showbs . fromEnum)) . M.toList
 
 getKeySet :: (Hashable k, Eq k) => M.HashMap k v -> S.HashSet k

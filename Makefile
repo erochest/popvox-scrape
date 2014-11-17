@@ -110,24 +110,24 @@ maplight-api: maplight-cache/109.json maplight-cache/110.json maplight-cache/111
 clear-cache:
 	-rm -rf maplight-cache
 
-govtrackdata/congress/109/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills .
+bills/109/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills bills/109
 
-govtrackdata/congress/110/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/110/bills .
+bills/110/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/110/bills bills/110
 
-govtrackdata/congress/111/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills .
+bills/111/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills bills/111
 
-govtrackdata/congress/112/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/112/bills .
+bills/112/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/112/bills bills/112
 
-govtrackdata/congress/113/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/113/bills .
+bills/113/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/113/bills bills/113
 
-govtrackdata/congress/114/bills:
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/114/bills .
+bills/114/bills:
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/114/bills bills/114
 
-govtrackdata: govtrackdata/congress/109/bills govtrackdata/congress/110/bills govtrackdata/congress/111/bills govtrackdata/congress/112/bills govtrackdata/congress/113/bills govtrackdata/congress/114/bills
+govtrackdata: bills/109/bills bills/110/bills bills/111/bills bills/112/bills bills/113/bills bills/114/bills
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
