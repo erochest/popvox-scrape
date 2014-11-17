@@ -383,7 +383,6 @@ data PopVoxOptions
     , maplightAPIDir  :: !FilePath
     , outputFile      :: !FilePath
     }
-    | TestJson
-    { maplightAPIDir :: !FilePath
-    }
+    | TestJson { maplightAPIDir  :: !FilePath }
+    | TestCsv  { maplightDataDir :: !FilePath }
     deriving (Show)

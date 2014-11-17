@@ -17,6 +17,9 @@ run:
 test-json:
 	cabal run -- test-json
 
+test-csv:
+	cabal run -- test-csv
+
 # docs:
 # generate api documentation
 #

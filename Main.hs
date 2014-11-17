@@ -7,19 +7,28 @@ module Main where
 
 
 import           Control.Error
-import           Control.Monad             (forM_)
+import           Control.Exception
+import           Control.Monad                (forM_)
+import           Control.Monad.Trans.Resource
+import qualified Data.ByteString.Lazy         as LB
+import           Data.Conduit
+import           Data.Conduit.List            (consume)
+import           Data.CSV.Conduit
+import           Data.CSV.Conduit.Conversion  (Named(..))
 import           Data.Monoid
-import qualified Data.Text                 as T
+import qualified Data.Text                    as T
 import           Data.Text.Buildable
 import           Data.Text.Format
-import qualified Data.Text.Format          as F
-import           Data.Text.Lazy.Builder    as B
+import qualified Data.Text.Format             as F
+import           Data.Text.Lazy.Builder       as B
 import           Data.Traversable
+import qualified Data.Vector                  as V
 import           Data.Version
 import           Filesystem
-import           Filesystem.Path.CurrentOS hiding (concat)
+import           Filesystem.Path.CurrentOS    hiding (concat)
 import           Options.Applicative
-import           Prelude                   hiding (FilePath, mapM)
+import           Prelude                      hiding (FilePath, mapM)
+import           System.IO                    (hFlush, stdout)
 
 import           Paths_popvox_scrape
 import           PopVox.MapLight
@@ -64,6 +73,19 @@ popvox TestJson{..} = forM_ sessions $ \s -> do
         Right _ -> putStrLn "ok"
         Left e  -> F.print "ERROR: {}\n" $ Only e
 
+popvox TestCsv{..} = do
+    files <- map encodeString <$> listDirectory maplightDataDir
+    forM_ files $ \fn -> do
+        F.print "Reading {}... " $ Only fn
+        hFlush stdout
+        s <- LB.readFile fn
+        let csv = decodeCSV defCSVSettings s :: Either SomeException (V.Vector (Named OrgContrib))
+        case csv of
+            Right rows ->
+                return ()
+                -- F.print "{} rows\n" . Only . length $ rows
+            Left err -> F.print "ERROR: {}\n" . Only $ Shown err
+
 log' :: Buildable a => F.Format -> a -> IO a
 log' f x = F.print f (Only x) >> return x
 
@@ -99,6 +121,14 @@ testJson'
                    <> help "A directory containing API responses.\
                            \ Defaults to './maplight-cache'.")
 
+testCsv' :: Parser PopVoxOptions
+testCsv'
+    =   TestCsv
+    <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
+                   <> metavar "MAPLIGHT_DATA_DIR"
+                   <> help "The directory containing the contribution\
+                           \ data. Defaults to './data'.")
+
 opts' :: Parser PopVoxOptions
 opts' = subparser
       ( command "transform"
@@ -106,7 +136,10 @@ opts' = subparser
             (progDesc "Read the data files, transform and join, and output."))
       <> command "test-json"
          (info testJson'
-            (progDesc "Read the JSON API files and test that they can parse them."))
+            (progDesc "Read the JSON API files and test that we can parse them."))
+      <> command "test-csv"
+         (info testCsv'
+            (progDesc "Read the CSV data files and test that we can parse them."))
       )
 
 opts :: ParserInfo PopVoxOptions
