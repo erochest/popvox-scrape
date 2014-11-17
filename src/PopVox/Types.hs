@@ -192,9 +192,9 @@ instance ToJSON ContribType where
 
 
 data ContribEntry = Contrib
-                  { contribParty :: !Party
-                  , contribType  :: !ContribType
-                  , contribYear  :: !Year
+                  { contribParty  :: !Party
+                  , contribType   :: !ContribType
+                  , contribYear   :: !Year
                   } deriving (Show, Eq, Ord, Generic)
 
 instance Hashable ContribEntry
@@ -227,17 +227,19 @@ instance ToJSON ContribEntry where
     toJSON = genericToJSON defaultOptions
 
 
-data OrgContrib = OrgContrib !OrgName !ContribEntry
+data OrgContrib = OrgContrib !OrgName !ContribEntry !Int
                 deriving (Show, Eq)
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
                        <$> m CSV..: "DonorNameNormalized"
                        <*> parseNamedRecord m
+                       <*> m CSV..: "TransactionAmount"
 
 instance ToNamedRecord OrgContrib where
-    toNamedRecord (OrgContrib n c) =
+    toNamedRecord (OrgContrib n c a) =
         namedRecord [ "DonorNameNormalized" CSV..= toField n
+                    , "TransactionAmount"   CSV..= toField a
                     ]
         <> toNamedRecord c
 
@@ -375,8 +377,13 @@ data OrgData = Org
              , orgBills    :: !BillIndex
              }
 
-data PopVoxOptions = PopVoxOptions
-                   { maplightDataDir :: !FilePath
-                   , maplightAPIDir  :: !FilePath
-                   , outputFile      :: !FilePath
-                   } deriving (Show)
+data PopVoxOptions
+    = Transform
+    { maplightDataDir :: !FilePath
+    , maplightAPIDir  :: !FilePath
+    , outputFile      :: !FilePath
+    }
+    | TestJson
+    { maplightAPIDir :: !FilePath
+    }
+    deriving (Show)

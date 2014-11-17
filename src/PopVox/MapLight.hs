@@ -61,8 +61,8 @@ readContribsC input =  sourceFile (encodeString input)
                     $= CL.map getNamed
 
 indexContribsC :: Monad m => Sink OrgContrib m OrgContribIndex
-indexContribsC = CL.foldMap $ \(OrgContrib name entry) ->
-    HashIndex . M.singleton name . HashIndex . M.singleton entry $ Sum 1
+indexContribsC = CL.foldMap $ \(OrgContrib name entry amount) ->
+    HashIndex . M.singleton name . HashIndex . M.singleton entry $ Sum amount
 
 readIndexContribs :: FilePath -> IO OrgContribIndex
 readIndexContribs input = runResourceT $ readContribsC input $$ indexContribsC

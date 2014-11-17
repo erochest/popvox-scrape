@@ -12,7 +12,10 @@ test: build
 	cabal test --test-option=--color
 
 run:
-	cabal run -- --data-dir data --output maplight-data.csv
+	cabal run -- transform --data-dir data --output maplight-data.csv
+
+test-json:
+	cabal run -- test-json
 
 # docs:
 # generate api documentation

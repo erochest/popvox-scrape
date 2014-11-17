@@ -7,6 +7,7 @@ module Main where
 
 
 import           Control.Error
+import           Control.Monad             (forM_)
 import           Data.Monoid
 import qualified Data.Text                 as T
 import           Data.Text.Buildable
@@ -31,11 +32,10 @@ sessions = [109, 110, 111, 112]
 
 
 main :: IO ()
-main = do
-    PopVoxOptions{..} <- execParser opts
+main = execParser opts >>= popvox
 
-    createTree maplightAPIDir
-
+popvox :: PopVoxOptions -> IO ()
+popvox Transform{..} = do
     putStrLn "\nQuerying maplight.org...\n"
     bIndex  <-  indexBills . concat . rights
             <$> mapM (billList maplightAPIDir
@@ -57,6 +57,12 @@ main = do
 
     putStrLn "\ndone\n"
 
+popvox TestJson{..} = forM_ sessions $ \s -> do
+    F.print "\nQuerying for session {}... " $ Only s
+    out <- billList maplightAPIDir s
+    case out of
+        Right _ -> putStrLn "ok"
+        Left e  -> F.print "ERROR: {}\n" $ Only e
 
 log' :: Buildable a => F.Format -> a -> IO a
 log' f x = F.print f (Only x) >> return x
@@ -69,19 +75,39 @@ instance Buildable FilePath where
     build = B.fromString . encodeString
 
 
+transform' :: Parser PopVoxOptions
+transform'
+    =   Transform
+    <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
+                   <> metavar "MAPLIGHT_DATA_DIR"
+                   <> help "The directory containing the contribution\
+                           \ data. Defaults to './data'.")
+    <*> fileOption (  short 'c' <> long "api-dir"
+                   <> metavar "MAPLIGHT_API_DIR"
+                   <> value "./maplight-cache"
+                   <> help "A directory containing API responses.\
+                           \ Defaults to './maplight-cache'.")
+    <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
+                   <> help "The file to write the output to.")
+
+testJson' :: Parser PopVoxOptions
+testJson'
+    =   TestJson
+    <$> fileOption (  short 'c' <> long "api-dir"
+                   <> metavar "MAPLIGHT_API_DIR"
+                   <> value "./maplight-cache"
+                   <> help "A directory containing API responses.\
+                           \ Defaults to './maplight-cache'.")
+
 opts' :: Parser PopVoxOptions
-opts' =   PopVoxOptions
-      <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
-                     <> metavar "MAPLIGHT_DATA_DIR"
-                     <> help "The directory containing the contribution\
-                             \ data. Defaults to './data'.")
-      <*> fileOption (  short 'c' <> long "api-dir"
-                     <> metavar "MAPLIGHT_API_DIR"
-                     <> value "./maplight-cache"
-                     <> help "A directory containing API responses.\
-                             \ Defaults to './maplight-cache'.")
-      <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
-                     <> help "The file to write the output to.")
+opts' = subparser
+      ( command "transform"
+        (info transform'
+            (progDesc "Read the data files, transform and join, and output."))
+      <> command "test-json"
+         (info testJson'
+            (progDesc "Read the JSON API files and test that they can parse them."))
+      )
 
 opts :: ParserInfo PopVoxOptions
 opts = info (helper <*> opts')
