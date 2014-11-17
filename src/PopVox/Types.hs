@@ -9,6 +9,7 @@
 module PopVox.Types
     ( ApiKey
     , Header
+    , HeaderSet
 
     , PopVoxOptions(..)
 
@@ -54,6 +55,7 @@ import qualified Data.CSV.Conduit.Conversion as CSV
 import           Data.Foldable
 import           Data.Hashable
 import qualified Data.HashMap.Strict         as M
+import qualified Data.HashSet                as S
 import           Data.Monoid
 import qualified Data.Text                   as T
 import           Data.Text.Buildable
@@ -69,7 +71,8 @@ import           Prelude                     hiding (FilePath)
 
 type ApiKey = T.Text
 
-type Header = Row ByteString
+type Header    = Row ByteString
+type HeaderSet = S.HashSet ByteString
 
 type OrgName  = T.Text
 type Year     = Int
