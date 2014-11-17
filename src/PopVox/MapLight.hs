@@ -5,8 +5,7 @@
 
 module PopVox.MapLight
     ( billList
-    , readContribsC
-    , indexContribsC
+    , readContribs
     , readIndexContribs
     , indexBills
     , toData
@@ -16,22 +15,19 @@ module PopVox.MapLight
 
 
 import           Control.Applicative
+import           Control.Error
 import           Control.Monad
-import           Control.Monad.Trans.Resource (MonadResource)
 import           Data.Aeson
-import qualified Data.ByteString.Lazy         as B
-import           Data.Conduit
-import           Data.Conduit.Binary
-import qualified Data.Conduit.List            as CL
-import           Data.CSV.Conduit
-import           Data.CSV.Conduit.Conversion  hiding ((.:))
+import qualified Data.ByteString.Lazy      as LB
+import           Data.Csv                  hiding (encode, (.:))
 import           Data.Foldable
-import qualified Data.HashMap.Strict          as M
-import qualified Data.List                    as L
+import qualified Data.HashMap.Strict       as M
+import qualified Data.List                 as L
 import           Data.Monoid
 import           Data.Ord
-import           Filesystem.Path.CurrentOS    hiding (encode)
-import           Prelude                      hiding (FilePath)
+import qualified Data.Vector               as V
+import           Filesystem.Path.CurrentOS hiding (encode)
+import           Prelude                   hiding (FilePath)
 
 import           PopVox.Types
 
@@ -42,11 +38,15 @@ instance FromJSON BillWrapper where
     parseJSON (Object o) = BillWrapper <$> o .: "bills"
     parseJSON _          = mzero
 
-billList :: FilePath -> Session -> IO (Either String [BillInfo])
-billList dataDir session =
-    fmap bills . eitherDecode' <$> B.readFile
-                               (   encodeString
-                               $   dataDir </> decodeString (show session) <.> "json")
+billList :: FilePath -> Session -> Script [BillInfo]
+billList dataDir session =   hoistEither
+                         .   fmap bills
+                         .   eitherDecode'
+                         =<< scriptIO
+                         (   LB.readFile
+                         .   encodeString
+                         $   dataDir </> decodeString (show session) <.> "json"
+                         )
 
 indexBills :: [BillInfo] -> OrgBillIndex
 indexBills = HashIndex . foldMap go
@@ -54,18 +54,15 @@ indexBills = HashIndex . foldMap go
         go (BillInfo bill orgInfos) = foldMap (go' bill) orgInfos
         go' bill (OrgInfo org d) = M.singleton org $ M.singleton bill d
 
-readContribsC :: (Monad m, MonadResource m)
-              => FilePath -> Source m OrgContrib
-readContribsC input =  sourceFile (encodeString input)
-                    $= intoCSV defCSVSettings
-                    $= CL.map getNamed
+readContribs :: FilePath -> Script (Header, V.Vector OrgContrib)
+readContribs fn =
+    hoistEither . decodeByName =<< scriptIO (LB.readFile $ encodeString fn)
 
-indexContribsC :: Monad m => Sink OrgContrib m OrgContribIndex
-indexContribsC = CL.foldMap $ \(OrgContrib name entry amount) ->
-    HashIndex . M.singleton name . HashIndex . M.singleton entry $ Sum amount
-
-readIndexContribs :: FilePath -> IO OrgContribIndex
-readIndexContribs input = runResourceT $ readContribsC input $$ indexContribsC
+readIndexContribs :: FilePath -> Script OrgContribIndex
+readIndexContribs input = foldMap f . snd <$> readContribs input
+    where
+        f (OrgContrib name entry amount) =
+          HashIndex . M.singleton name . HashIndex . M.singleton entry $ Sum amount
 
 toData :: OrgBillIndex -> OrgContribIndex -> [OrgData]
 toData (HashIndex billIndex) (HashIndex contribIndex) =
@@ -88,7 +85,7 @@ dumpContribIndex = dump "contrib-index.json" spreadOrg
                                  $ unIndex cindex
 
 dump :: ToJSON b => FilePath -> ((k, v) -> [b]) -> HashIndex k v -> IO ()
-dump fname f = B.writeFile (encodeString fname)
+dump fname f = LB.writeFile (encodeString fname)
              . encode
              . L.concatMap f
              . M.toList

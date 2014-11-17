@@ -31,7 +31,6 @@ library
                      , conduit
                      , resourcet
                      , conduit-extra
-                     , csv-conduit
                      , html-conduit
                      , errors
                      , mtl
@@ -44,6 +43,8 @@ library
                      , system-filepath
                      , system-fileio
                      , scientific
+                     , vector
+                     , cassava
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -63,9 +64,9 @@ executable popvox-scrape
                      , system-filepath
                      , system-fileio
                      , conduit
-                     , csv-conduit
                      , resourcet
                      , vector
+                     , cassava
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 

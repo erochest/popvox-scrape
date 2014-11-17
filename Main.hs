@@ -13,8 +13,7 @@ import           Control.Monad.Trans.Resource
 import qualified Data.ByteString.Lazy         as LB
 import           Data.Conduit
 import           Data.Conduit.List            (consume)
-import           Data.CSV.Conduit
-import           Data.CSV.Conduit.Conversion  (Named(..))
+import           Data.Csv                     hiding (Only, Parser)
 import           Data.Monoid
 import qualified Data.Text                    as T
 import           Data.Text.Buildable
@@ -25,7 +24,7 @@ import           Data.Traversable
 import qualified Data.Vector                  as V
 import           Data.Version
 import           Filesystem
-import           Filesystem.Path.CurrentOS    hiding (concat)
+import           Filesystem.Path.CurrentOS    hiding (concat, decode)
 import           Options.Applicative
 import           Prelude                      hiding (FilePath, mapM)
 import           System.IO                    (hFlush, stdout)
@@ -44,31 +43,32 @@ main :: IO ()
 main = execParser opts >>= popvox
 
 popvox :: PopVoxOptions -> IO ()
-popvox Transform{..} = do
-    putStrLn "\nQuerying maplight.org...\n"
-    bIndex  <-  indexBills . concat . rights
+popvox Transform{..} = runScript $ do
+    scriptIO $ putStrLn "\nQuerying maplight.org...\n"
+    bIndex  <-  indexBills . concat
             <$> mapM (billList maplightAPIDir
                         `withLog` "\tQuerying for session {}...\n"
                      ) sessions
-    dumpBillIndex bIndex
+    scriptIO $ dumpBillIndex bIndex
 
-    F.print "\nReading contributor data from {}...\n"
+    scriptIO
+        . F.print "\nReading contributor data from {}...\n"
         . Only $ encodeString maplightDataDir
     ocIndex <-  fmap mconcat
             .   mapM (readIndexContribs `withLog` "\tReading input file {}...\n")
-            =<< listDirectory maplightDataDir
-    dumpContribIndex ocIndex
+            =<< scriptIO (listDirectory maplightDataDir)
+    scriptIO $ dumpContribIndex ocIndex
 
-    F.print "\nWriting data to {}...\n" $ Only outputFile
-    writeOrgData (makeHeaderRow ocIndex bIndex)
+    scriptIO . F.print "\nWriting data to {}...\n" $ Only outputFile
+    scriptIO $ writeOrgData (makeHeaderRow ocIndex bIndex)
                  (encodeString outputFile)
                  (toData bIndex ocIndex)
 
-    putStrLn "\ndone\n"
+    scriptIO $ putStrLn "\ndone\n"
 
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
-    out <- billList maplightAPIDir s
+    out <- runEitherT $ billList maplightAPIDir s
     case out of
         Right _ -> putStrLn "ok"
         Left e  -> F.print "ERROR: {}\n" $ Only e
@@ -79,18 +79,16 @@ popvox TestCsv{..} = do
         F.print "Reading {}... " $ Only fn
         hFlush stdout
         s <- LB.readFile fn
-        let csv = decodeCSV defCSVSettings s :: Either SomeException (V.Vector (Named OrgContrib))
+        let csv = snd <$> decodeByName s :: Either String (V.Vector OrgContrib)
         case csv of
-            Right rows ->
-                return ()
-                -- F.print "{} rows\n" . Only . length $ rows
-            Left err -> F.print "ERROR: {}\n" . Only $ Shown err
+            Right rows -> F.print "{} rows\n" . Only . V.length $ rows
+            Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
 
 log' :: Buildable a => F.Format -> a -> IO a
 log' f x = F.print f (Only x) >> return x
 
-withLog :: Buildable a => (a -> IO b) -> F.Format -> a -> IO b
-withLog m f a = F.print f (Only a) >> m a
+withLog :: Buildable a => (a -> Script b) -> F.Format -> a -> Script b
+withLog m f a = scriptIO (F.print f $ Only a) >> m a
 
 
 instance Buildable FilePath where

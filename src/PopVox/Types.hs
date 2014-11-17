@@ -49,31 +49,29 @@ import           Control.Applicative
 import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson
-import           Data.Aeson.Types            (defaultOptions)
-import           Data.ByteString             (ByteString)
-import           Data.CSV.Conduit            (Row)
-import           Data.CSV.Conduit.Conversion hiding ((.:))
-import qualified Data.CSV.Conduit.Conversion as CSV
+import           Data.Aeson.Types           (defaultOptions)
+import           Data.ByteString.Lazy       (ByteString)
+import           Data.Csv                   hiding ((.:))
+import qualified Data.Csv                   as CSV
 import           Data.Foldable
 import           Data.Hashable
-import qualified Data.HashMap.Strict         as M
-import qualified Data.HashSet                as S
+import qualified Data.HashMap.Strict        as M
+import qualified Data.HashSet               as S
 import           Data.Monoid
-import qualified Data.Text                   as T
+import qualified Data.Text                  as T
 import           Data.Text.Buildable
-import qualified Data.Text.Lazy              as TL
-import qualified Data.Text.Lazy.Builder      as B
+import qualified Data.Text.Lazy             as TL
+import qualified Data.Text.Lazy.Builder     as B
 import           Data.Text.Lazy.Builder.Int
-import qualified Data.Text.Read              as TR
+import qualified Data.Text.Read             as TR
 import           Data.Traversable
 import           Filesystem.Path.CurrentOS
 import           GHC.Generics
-import           Prelude                     hiding (FilePath)
+import           Prelude                    hiding (FilePath)
 
 
 type ApiKey = T.Text
 
-type Header    = Row ByteString
 type HeaderSet = S.HashSet ByteString
 
 type OrgName  = T.Text
@@ -192,9 +190,9 @@ instance ToJSON ContribType where
 
 
 data ContribEntry = Contrib
-                  { contribParty  :: !Party
-                  , contribType   :: !ContribType
-                  , contribYear   :: !Year
+                  { contribParty :: !Party
+                  , contribType  :: !ContribType
+                  , contribYear  :: !Year
                   } deriving (Show, Eq, Ord, Generic)
 
 instance Hashable ContribEntry
@@ -383,6 +381,6 @@ data PopVoxOptions
     , maplightAPIDir  :: !FilePath
     , outputFile      :: !FilePath
     }
-    | TestJson { maplightAPIDir  :: !FilePath }
+    | TestJson { maplightAPIDir :: !FilePath }
     | TestCsv  { maplightDataDir :: !FilePath }
     deriving (Show)
