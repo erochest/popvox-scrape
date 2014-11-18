@@ -42,6 +42,8 @@ module PopVox.Types
     , OrgContribIndex
     , OrgContribIndex'
 
+    , WithHeader(..)
+
     ) where
 
 
@@ -50,6 +52,9 @@ import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types           (defaultOptions)
+import           Data.Bifunctor             (bimap, first)
+import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Char8      as C8
 import           Data.ByteString.Lazy       (ByteString)
 import           Data.Csv                   hiding ((.:))
 import qualified Data.Csv                   as CSV
@@ -60,14 +65,16 @@ import qualified Data.HashSet               as S
 import           Data.Monoid
 import qualified Data.Text                  as T
 import           Data.Text.Buildable
+import           Data.Text.Encoding         (encodeUtf8)
 import qualified Data.Text.Lazy             as TL
 import qualified Data.Text.Lazy.Builder     as B
 import           Data.Text.Lazy.Builder.Int
 import qualified Data.Text.Read             as TR
 import           Data.Traversable
-import           Filesystem.Path.CurrentOS
+import qualified Data.Vector                as V
+import           Filesystem.Path.CurrentOS  hiding (concat)
 import           GHC.Generics
-import           Prelude                    hiding (FilePath)
+import           Prelude                    hiding (FilePath, concat)
 
 
 type ApiKey = T.Text
@@ -490,6 +497,48 @@ data OrgData = Org
              , orgContribs :: !ContribIndex
              , orgBills    :: !BillIndex
              }
+
+instance ToNamedRecord OrgData where
+    toNamedRecord (Org n conts bills) =
+        namedRecord $ concat [ ["Organization" CSV..= n]
+                             , contribsRecord $ fmap getSum conts
+                             , billsRecord bills
+                             , totalsRecord conts
+                             ]
+
+
+contribsRecord :: ContribIndex' -> [(BS.ByteString, BS.ByteString)]
+contribsRecord = map (columnbs `bimap` showbs) . M.toList . unIndex
+
+billsRecord :: BillIndex -> [(BS.ByteString, BS.ByteString)]
+billsRecord = map (columnbs `bimap` (showbs . fromEnum)) . M.toList
+
+totalsRecord :: ContribIndex -> [(BS.ByteString, BS.ByteString)]
+totalsRecord = M.toList
+             . fmap (showbs . getSum)
+             . indexIndex (columnbs . contribParty)
+             . unIndex
+
+columnbs :: ColumnHead c => c -> BS.ByteString
+columnbs = encodeUtf8 . columnValue
+
+showbs :: Show s => s -> BS.ByteString
+showbs = C8.pack . show
+
+indexIndex :: (Eq k2, Hashable k2, Monoid v)
+           => (k1 -> k2) -> M.HashMap k1 v -> M.HashMap k2 v
+indexIndex f = M.fromListWith mappend . map (first f) . M.toList
+
+data WithHeader a = WithHeader Header a
+
+instance ToNamedRecord a => ToNamedRecord (WithHeader a) where
+    toNamedRecord (WithHeader header a) =
+        V.foldl' ensure (toNamedRecord a) header
+        where
+            ensure :: NamedRecord -> Name -> NamedRecord
+            ensure m n | n `M.member` m = m
+                       | otherwise      = M.insert n mempty m
+
 
 data PopVoxOptions
     = Transform
