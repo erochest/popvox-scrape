@@ -6,6 +6,7 @@
 module PopVox.MapLight
     ( billList
     , readContribs
+    , indexContribs
     , readIndexContribs
     , indexBills
     , toData
@@ -58,11 +59,14 @@ readContribs :: FilePath -> Script (Header, V.Vector OrgContrib)
 readContribs fn =
     hoistEither . decodeByName =<< scriptIO (LB.readFile $ encodeString fn)
 
-readIndexContribs :: FilePath -> Script OrgContribIndex
-readIndexContribs input = foldMap f . snd <$> readContribs input
+indexContribs :: V.Vector OrgContrib -> OrgContribIndex
+indexContribs = foldMap f
     where
         f (OrgContrib name entry amount) =
           HashIndex . M.singleton name . HashIndex . M.singleton entry $ Sum amount
+
+readIndexContribs :: FilePath -> Script OrgContribIndex
+readIndexContribs input = indexContribs . snd <$> readContribs input
 
 toData :: OrgBillIndex -> OrgContribIndex -> [OrgData]
 toData (HashIndex billIndex) (HashIndex contribIndex) =

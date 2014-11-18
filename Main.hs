@@ -7,12 +7,8 @@ module Main where
 
 
 import           Control.Error
-import           Control.Exception
 import           Control.Monad                (forM_)
-import           Control.Monad.Trans.Resource
 import qualified Data.ByteString.Lazy         as LB
-import           Data.Conduit
-import           Data.Conduit.List            (consume)
 import           Data.Csv                     hiding (Only, Parser)
 import           Data.Monoid
 import qualified Data.Text                    as T
@@ -54,8 +50,8 @@ popvox Transform{..} = runScript $ do
     scriptIO
         . F.print "\nReading contributor data from {}...\n"
         . Only $ encodeString maplightDataDir
-    ocIndex <-  fmap mconcat
-            .   mapM (readIndexContribs `withLog` "\tReading input file {}...\n")
+    ocIndex <-  fmap (mconcat . map indexContribs')
+            .   mapM (readContribs `withLog` "\tReading input file {}...\n")
             =<< scriptIO (listDirectory maplightDataDir)
     scriptIO $ dumpContribIndex ocIndex
 
@@ -90,9 +86,18 @@ log' f x = F.print f (Only x) >> return x
 withLog :: Buildable a => (a -> Script b) -> F.Format -> a -> Script b
 withLog m f a = scriptIO (F.print f $ Only a) >> m a
 
-
 instance Buildable FilePath where
     build = B.fromString . encodeString
+
+majorParty :: Party -> Bool
+majorParty Dem = True
+majorParty GOP = True
+majorParty _   = False
+
+indexContribs' :: (Header, V.Vector OrgContrib) -> OrgContribIndex
+indexContribs' = indexContribs
+               . V.filter (majorParty . contribParty . orgContribEntry)
+               . snd
 
 
 transform' :: Parser PopVoxOptions

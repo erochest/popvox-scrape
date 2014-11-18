@@ -348,8 +348,11 @@ instance ToJSON ContribEntry where
     toJSON = genericToJSON defaultOptions
 
 
-data OrgContrib = OrgContrib !OrgName !ContribEntry !Int
-                deriving (Show, Eq)
+data OrgContrib = OrgContrib
+                { orgContribName   :: !OrgName
+                , orgContribEntry  :: !ContribEntry
+                , orgContribAmount :: !Int
+                } deriving (Show, Eq)
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
