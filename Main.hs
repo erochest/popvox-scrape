@@ -62,6 +62,8 @@ popvox Transform{..} = runScript $ do
 
     scriptIO $ putStrLn "\ndone\n"
 
+popvox RankBills{..} = runScript $ undefined
+
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
     out <- runEitherT $ billList maplightAPIDir s
@@ -112,6 +114,19 @@ transform'
                    <> value "./maplight-cache"
                    <> help "A directory containing API responses.\
                            \ Defaults to './maplight-cache'.")
+    <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
+                   <> help "The file to write the output to.")
+
+rankBills' :: Parser PopVoxOptions
+rankBills'
+    =   RankBills
+    <$> fileOption (  short 's' <> long "score-dir"
+                   <> metavar "VOTEVIEW_DATA_DIR"
+                   <> help "The directory containing the voteview.com\
+                           \ data directory.")
+    <*> fileOption (  short 'b' <> long "bill-dir" <> metavar "BILL_DATA_DIR"
+                   <> help "The directory containing the bill JSON data\
+                           \ from govtrack.us.")
     <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
                    <> help "The file to write the output to.")
 

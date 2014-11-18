@@ -2,23 +2,30 @@
 MAPLIGHT_APIKEY=
 CURL_OPTS=--max-time 90
 
-all: init test docs package
+all: run
 
 init:
 	cabal sandbox init
 	make deps
+	data
 
-test: build
-	cabal test --test-option=--color
+test: test-json test-csv
 
-run:
+run: test transform rank-bills
+
+transform:
 	cabal run -- transform --data-dir data --output maplight-data.csv
+
+rank-bills:
+	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --output=bill-ranks.csv
 
 test-json:
 	cabal run -- test-json
 
 test-csv:
 	cabal run -- test-csv
+
+data: unzip-contributions maplight-api govtrackdata junkord
 
 # docs:
 # generate api documentation
@@ -147,5 +154,15 @@ bills/114/bills:
 	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/114/bills bills/114
 
 govtrackdata: bills/109/bills bills/110/bills bills/111/bills bills/112/bills bills/113/bills
+
+junkord/HL01112D21_PRES_BSSE.DAT:
+	mkdir -p junkord
+	curl ${CURL_OPTS} -o $@ ftp://voteview.com/junkord/HL01112D21_PRES_BSSE.DAT
+
+junkord/SL01112D21_BSSE.dat:
+	mkdir -p junkord
+	curl ${CURL_OPTS} -o $@ ftp://voteview.com/junkord/SL01112D21_BSSE.dat
+
+junkord: junkord/SL01112D21_BSSE.dat junkord/HL01112D21_PRES_BSSE.DAT
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
