@@ -140,25 +140,140 @@ instance (Hashable k, Eq k, Monoid v) => Monoid (HashIndex k v) where
     mappend (HashIndex a) (HashIndex b) = HashIndex $ M.unionWith mappend a b
 
 
-data Party = Dem | GOP
-           deriving (Show, Eq, Enum, Bounded, Ord, Generic)
+data Party
+        = AmericanInd
+        | Citizens
+        | Conservative
+        | Constitution
+        | Constitutional
+        | DemFarmLabor
+        | Dem
+        | GrandOld
+        | Green
+        | Independent
+        | IndAm
+        | Libertarian
+        | NoParty
+        | Other
+        | Peace
+        | Reform
+        | Socialist
+        | Taxpayers
+        | TermLimits
+        | GOP
+        | UnknownParty
+        | WorkingFamilies
+        | WriteIn
+        deriving (Show, Eq, Enum, Bounded, Ord, Generic)
 
 instance Hashable Party
 
 instance ColumnHead Party where
-    columnValue   Dem = "Dem"
-    columnValue   GOP = "GOP"
-    columnBuilder Dem = "Dem"
-    columnBuilder GOP = "GOP"
+    columnValue   AmericanInd     = "AmI"
+    columnValue   Citizens        = "Cit"
+    columnValue   Conservative    = "Con"
+    columnValue   Constitution    = "Cst"
+    columnValue   Constitutional  = "Csl"
+    columnValue   DemFarmLabor    = "DFL"
+    columnValue   Dem             = "Dem"
+    columnValue   GrandOld        = "GOl"
+    columnValue   Green           = "Grn"
+    columnValue   Independent     = "Ind"
+    columnValue   IndAm           = "IAm"
+    columnValue   Libertarian     = "Lib"
+    columnValue   NoParty         = "Non"
+    columnValue   Other           = "Oth"
+    columnValue   Peace           = "P&F"
+    columnValue   Reform          = "Ref"
+    columnValue   Socialist       = "Soc"
+    columnValue   Taxpayers       = "Tax"
+    columnValue   TermLimits      = "Trm"
+    columnValue   GOP             = "GOP"
+    columnValue   UnknownParty    = "Unk"
+    columnValue   WorkingFamilies = "Wrk"
+    columnValue   WriteIn         = "Wri"
+
+    columnBuilder AmericanInd     = "AmI"
+    columnBuilder Citizens        = "Cit"
+    columnBuilder Conservative    = "Con"
+    columnBuilder Constitution    = "Cst"
+    columnBuilder Constitutional  = "Csl"
+    columnBuilder DemFarmLabor    = "DFL"
+    columnBuilder Dem             = "Dem"
+    columnBuilder GrandOld        = "GOl"
+    columnBuilder Green           = "Grn"
+    columnBuilder Independent     = "Ind"
+    columnBuilder IndAm           = "IAm"
+    columnBuilder Libertarian     = "Lib"
+    columnBuilder NoParty         = "Non"
+    columnBuilder Other           = "Oth"
+    columnBuilder Peace           = "P&F"
+    columnBuilder Reform          = "Ref"
+    columnBuilder Socialist       = "Soc"
+    columnBuilder Taxpayers       = "Tax"
+    columnBuilder TermLimits      = "Trm"
+    columnBuilder GOP             = "GOP"
+    columnBuilder UnknownParty    = "Unk"
+    columnBuilder WorkingFamilies = "Wrk"
+    columnBuilder WriteIn         = "Wri"
 
 instance FromField Party where
-    parseField "Democratic" = pure Dem
-    parseField "Republican" = pure GOP
-    parseField p            = fail $ "Invalid Party: " ++ show p
+    parseField "American Independent" = pure AmericanInd
+    parseField "Citizens"             = pure Citizens
+    parseField "Citizens'"            = pure Citizens
+    parseField "Conservative"         = pure Conservative
+    parseField "Constitution"         = pure Constitution
+    parseField "Constitutional"       = pure Constitutional
+    parseField "Democrat-Farm-Labor"  = pure DemFarmLabor
+    parseField "Democratic"           = pure Dem
+    parseField "Grand Old"            = pure GrandOld
+    parseField "Green"                = pure Green
+    parseField "Independence"         = pure Independent
+    parseField "Independent"          = pure Independent
+    parseField "Independent American" = pure IndAm
+    parseField "Libertarian"          = pure Libertarian
+    parseField "No Party Affiliation" = pure NoParty
+    parseField "No Party Preference"  = pure NoParty
+    parseField "None"                 = pure NoParty
+    parseField "Other"                = pure Other
+    parseField "Peace and Freedom"    = pure Peace
+    parseField "Reform"               = pure Reform
+    parseField "Republican"           = pure GOP
+    parseField "Socialist"            = pure Socialist
+    parseField "Socialist USA"        = pure Socialist
+    parseField "Taxpayers"            = pure Taxpayers
+    parseField "Term Limits"          = pure TermLimits
+    parseField "Unknown"              = pure UnknownParty
+    parseField "Working Families"     = pure WorkingFamilies
+    parseField "Write-In"             = pure WriteIn
+    parseField "\\N"                  = pure UnknownParty
+    parseField ""                     = pure UnknownParty
+    parseField p                      = fail $ "Invalid Party: " ++ show p
 
 instance ToField Party where
-    toField Dem = "Democratic"
-    toField GOP = "Republican"
+    toField AmericanInd     = "American Independent"
+    toField Citizens        = "Citizens"
+    toField Conservative    = "Conservative"
+    toField Constitution    = "Constitution"
+    toField Constitutional  = "Constitutional"
+    toField DemFarmLabor    = "Democrat-Farm-Labor"
+    toField Dem             = "Democratic"
+    toField GrandOld        = "Grand Old"
+    toField Green           = "Green"
+    toField Independent     = "Independent"
+    toField IndAm           = "Independent American"
+    toField Libertarian     = "Libertarian"
+    toField NoParty         = "None"
+    toField Other           = "Other"
+    toField Peace           = "Peace and Freedom"
+    toField Reform          = "Reform"
+    toField Socialist       = "Socialist"
+    toField Taxpayers       = "Taxpayers"
+    toField TermLimits      = "TermLimits"
+    toField GOP             = "Republican"
+    toField UnknownParty    = "Unknown"
+    toField WorkingFamilies = "Working Families"
+    toField WriteIn         = "Write-In"
 
 instance ToJSON Party where
     toJSON = genericToJSON defaultOptions
@@ -173,6 +288,7 @@ instance Hashable ContribType
 instance FromField ContribType where
     parseField "Independent Expenditor (Person or Group)" = pure Expenditure
     parseField "Single Candidate Independent Expenditure" = pure Expenditure
+    parseField ""                                         = pure Contribution
     parseField _                                          = pure Contribution
 
 instance ToField ContribType where
@@ -210,9 +326,9 @@ instance ColumnHead ContribEntry where
 
 instance FromNamedRecord ContribEntry where
     parseNamedRecord m =   Contrib
-                       <$> m CSV..: "RecipientCandidateParty"
-                       <*> m CSV..: "DonorCommitteeType"
-                       <*> m CSV..: "ElectionCycle"
+                       <$> m CSV..: "RecipientCandidateParty"   -- 40
+                       <*> m CSV..: "DonorCommitteeType"        -- 67
+                       <*> m CSV..: "ElectionCycle"             --  2
 
 instance ToNamedRecord ContribEntry where
     toNamedRecord (Contrib p t y) =
@@ -230,9 +346,9 @@ data OrgContrib = OrgContrib !OrgName !ContribEntry !Int
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
-                       <$> m CSV..: "DonorNameNormalized"
+                       <$> m CSV..: "DonorNameNormalized"   -- 48
                        <*> parseNamedRecord m
-                       <*> m CSV..: "TransactionAmount"
+                       <*> m CSV..: "TransactionAmount"     -- 13
 
 instance ToNamedRecord OrgContrib where
     toNamedRecord (OrgContrib n c a) =

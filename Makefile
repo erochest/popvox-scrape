@@ -95,6 +95,12 @@ data/2014_cand.csv: zips/contributions-2014.zip
 
 unzip-contributions: data/2008_cand.csv data/2010_cand.csv data/2012_cand.csv data/2014_cand.csv
 
+clean-contributions:
+	sed -i '.bak' -e 's/\\"/""/g' data/2008_cand.csv
+	sed -i '.bak' -e 's/\\"/""/g' data/2010_cand.csv
+	sed -i '.bak' -e 's/\\"/""/g' data/2012_cand.csv
+	sed -i '.bak' -e 's/\\"/""/g' data/2014_cand.csv
+
 maplight-cache/109.json:
 	mkdir -p maplight-cache
 	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=109&include_organizations=1&has_organizations=0'

@@ -2,3 +2,14 @@
 :set -isrc
 :set -XOverloadedStrings
 :load Main
+
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Lazy.Char8 as L8
+import qualified Data.Vector as V
+import qualified Data.Text as T
+import qualified Data.HashMap.Strict as M
+
+:m +Data.Csv
+
+let slice n = L8.unlines . Data.List.take n . L8.lines
