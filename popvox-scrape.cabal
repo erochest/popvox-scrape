@@ -17,6 +17,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     PopVox.Contribs
+                     , PopVox.Fields
                      , PopVox.MapLight
                      , PopVox.Output
                      , PopVox.Ranks

@@ -12,11 +12,11 @@ import           Control.Applicative
 import           Control.Error
 import qualified Data.Text                 as T
 import qualified Data.Text.IO              as TIO
-import           Data.Text.Read
 import           Data.Traversable
 import           Filesystem.Path.CurrentOS
 import           Prelude                   hiding (FilePath)
 
+import           PopVox.Fields
 import           PopVox.Types
 
 
@@ -96,43 +96,3 @@ parsePosition =
                        <*> fmap resolvePartyCode (asint =<< field 25 4)
                        <*> fmap T.strip (field 29 11)
                        <*> (asdouble =<< field 41 6)
-
-reader :: String -> Reader b -> T.Text -> Fields a b
-reader e r t =
-    case r (T.strip t) of
-        Right (n, x)
-            | T.null x  -> return n
-            | otherwise -> fail $  e
-                                ++ ": Invalid input. Unexpected leftovers: "
-                                ++ T.unpack x
-        Left l          -> fail l
-
-asint :: T.Text -> Fields a Int
-asint = reader "DECIMAL" decimal
-
-asdouble :: T.Text -> Fields a Double
-asdouble = reader "DOUBLE" double
-
-pnote :: String -> Fields a (Maybe b) -> Fields a b
-pnote e = (>>= maybe (fail e) return)
-
-newtype Fields a b = Fields { runFields :: a -> Either String b }
-
-instance Functor (Fields a) where
-    fmap f (Fields p) = Fields $ fmap f . p
-
-instance Applicative (Fields a) where
-    pure = Fields . const . Right
-    (Fields f) <*> (Fields x) = Fields $ \a ->
-        f a <*> x a
-
-instance Monad (Fields a) where
-    return = Fields . const . Right
-    fail = Fields . const . Left
-    (Fields x) >>= f = Fields $ \a ->
-        case x a of
-            Right x' -> runFields (f x') a
-            Left e   -> Left e
-
-field :: Int -> Int -> Fields T.Text T.Text
-field i l = Fields $ Right . T.take l . T.drop i
