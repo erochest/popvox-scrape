@@ -4,6 +4,7 @@
 module PopVox.Bills
     ( readBillData
     , readBillDataDir
+    , resolveIDs
     ) where
 
 
@@ -13,6 +14,7 @@ import           Control.Error
 import           Control.Monad
 import           Data.Aeson
 import qualified Data.ByteString.Lazy      as LB
+import qualified Data.HashMap.Strict       as M
 import           Data.Traversable
 import qualified Filesystem                as FS
 import           Filesystem.Path.CurrentOS
@@ -31,3 +33,8 @@ readBillDataDir dataDir = EitherT . fmap sequenceA . runResourceT $
     =$ filterC (("data.json" ==) . filename)
     =$ mapMC (liftIO . readBillData)
     $$ sinkList
+
+resolveIDs :: LegislatorIndex -> BillSponsors Thomas -> BillSponsors ICPSR
+resolveIDs index = joinm . fmap (`M.lookup` index)
+    where
+        joinm (BillSponsors b s ss) = BillSponsors b (join s) $ catMaybes ss

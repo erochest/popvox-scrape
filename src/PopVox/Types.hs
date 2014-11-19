@@ -47,6 +47,7 @@ module PopVox.Types
     , WithHeader(..)
 
     , PositionScore(..)
+    , PositionScoreIndex
     , ICPSR(..)
     , Thomas(..)
     , State
@@ -56,6 +57,7 @@ module PopVox.Types
     , PScoreParty
 
     , LegislatorIndex
+    , BillRankData(..)
     ) where
 
 
@@ -64,7 +66,6 @@ import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types           (defaultOptions)
-import qualified Data.Aeson.Types           as AT
 import           Data.Bifunctor             (bimap, first)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as C8
@@ -485,6 +486,9 @@ instance ColumnHead Bill where
                                              , B.singleton ')'
                                              ]
 
+instance ToField Bill where
+    toField = encodeUtf8 . columnValue
+
 instance ToJSON Bill where
     toJSON = genericToJSON defaultOptions
 
@@ -494,6 +498,9 @@ data BillSponsors s = BillSponsors
                     , billSponsor     :: !(Maybe s)
                     , billCosponsors  :: ![s]
                     } deriving (Eq, Show, Generic)
+
+instance Functor BillSponsors where
+    fmap f (BillSponsors bill s ss) = BillSponsors bill (fmap f s) (fmap f ss)
 
 instance FromJSON (BillSponsors Thomas) where
     parseJSON (Object o) =   BillSponsors
@@ -598,6 +605,10 @@ newtype ICPSR = ICPSR { unICPSR :: Int }
 
 instance Hashable ICPSR
 
+
+type PositionScoreIndex = M.HashMap (ICPSR, Session) PositionScore
+
+
 newtype Thomas = Thomas { unThomas :: T.Text }
                  deriving (Show, Eq, Generic)
 
@@ -616,16 +627,30 @@ type PScoreParty = Int
 type LegislatorIndex = M.HashMap Thomas ICPSR
 
 
+data BillRankData = BillRankData
+                  { billRankDataBill     :: !Bill
+                  , billRankSponsorCount :: !Int
+                  , billRankDataPosition :: !Score
+                  } deriving (Show, Eq, Generic)
+
+instance ToNamedRecord BillRankData where
+    toNamedRecord (BillRankData bill count score) =
+        namedRecord [ "Bill"          CSV..= bill
+                    , "Sponsor Count" CSV..= count
+                    , "Score"         CSV..= score
+                    ]
+
+
 data PopVoxOptions
     = Transform { maplightDataDir :: !FilePath
                 , maplightAPIDir  :: !FilePath
                 , outputFile      :: !FilePath
                 }
-    | RankBills { rankBillScores :: !FilePath
-                , rankBillBills  :: !FilePath
-                , rankBillIndex  :: !FilePath
-                , rankBillOutput :: !FilePath
+    | RankBills { rankBillScores  :: !FilePath
+                , rankBillBills   :: !FilePath
+                , rankBillIndex   :: !FilePath
+                , rankBillOutput  :: !FilePath
                 }
-    | TestJson  { maplightAPIDir :: !FilePath }
+    | TestJson  { maplightAPIDir  :: !FilePath }
     | TestCsv   { maplightDataDir :: !FilePath }
     deriving (Show)

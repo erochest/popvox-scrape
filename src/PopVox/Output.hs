@@ -6,18 +6,21 @@ module PopVox.Output
     ( Header
     , writeOrgData
     , makeHeaderRow
+    , writeBillRanks
     ) where
 
 
-import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Lazy      as LB
 import           Data.Csv
 import           Data.Hashable
-import qualified Data.HashMap.Strict  as M
-import qualified Data.HashSet         as S
-import qualified Data.List            as L
+import qualified Data.HashMap.Strict       as M
+import qualified Data.HashSet              as S
+import qualified Data.List                 as L
 import           Data.Ord
 import           Data.Text.Encoding
-import qualified Data.Vector          as V
+import qualified Data.Vector               as V
+import           Filesystem.Path.CurrentOS
+import           Prelude                   hiding (FilePath)
 
 import           PopVox.Types
 
@@ -51,9 +54,13 @@ totalHeaders = indexHeaders ( S.fromList
                             )
 
 writeOrgData :: Header -> FilePath -> [OrgData] -> IO ()
-writeOrgData header out = LB.writeFile out
+writeOrgData header out = LB.writeFile (encodeString out)
                         . encodeByName header
                         . map (WithHeader header)
 
 getKeySet :: (Hashable k, Eq k) => M.HashMap k v -> S.HashSet k
 getKeySet = S.fromList . M.keys
+
+writeBillRanks :: FilePath -> [BillRankData] -> IO ()
+writeBillRanks out = LB.writeFile (encodeString out)
+                   . encodeByName (V.fromList ["Bill", "Sponsor Count", "Score"])

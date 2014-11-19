@@ -1,15 +1,23 @@
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
 
 module PopVox.Ranks
     ( resolvePartyCode
     , resolveStateCode
     , readPositionScores
+    , indexPositionScores
+    , assembleRanks
     ) where
 
 
 import           Control.Applicative
+import           Control.Arrow
 import           Control.Error
+import           Data.Foldable
+import qualified Data.HashMap.Strict       as M
+import           Data.Maybe
 import qualified Data.Text                 as T
 import qualified Data.Text.IO              as TIO
 import           Data.Traversable
@@ -96,3 +104,30 @@ parsePosition =
                        <*> fmap resolvePartyCode (asint =<< field 25 4)
                        <*> fmap T.strip (field 29 11)
                        <*> (asdouble =<< field 41 6)
+
+indexPositionScores :: [PositionScore] -> PositionScoreIndex
+indexPositionScores = M.fromList . map ((psICPSR &&& psCongress) &&& id)
+
+assembleRanks :: PositionScoreIndex -> [BillSponsors ICPSR] -> [BillRankData]
+assembleRanks psIndex =
+    map (toData . (billSponsorInfo &&& getScore psIndex))
+    where
+        toData (bill, (count, score)) = BillRankData bill count score
+
+
+getScore :: PositionScoreIndex -> BillSponsors ICPSR -> (Int, Score)
+getScore psIndex bill@BillSponsors{billSponsorInfo} =
+      mean
+    . map psScore
+    . mapMaybe ((`M.lookup` psIndex) . (, billSession billSponsorInfo))
+    $ getAllSponsors bill
+
+getAllSponsors :: BillSponsors s -> [s]
+getAllSponsors (BillSponsors _ s ss) = maybeToList s ++ ss
+
+mean :: [Score] -> (Int, Score)
+mean [] = (0, 0.0)
+mean ss = fini $ foldl' go (0, 0 :: Int) ss
+    where
+        go (s', c) s = (s' + s, succ c)
+        fini (s, c)  = (c, s / fromIntegral c)

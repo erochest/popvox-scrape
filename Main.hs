@@ -61,7 +61,7 @@ popvox Transform{..} = runScript $ do
 
     scriptIO . F.print "\nWriting data to {}...\n" $ Only outputFile
     scriptIO $ writeOrgData (makeHeaderRow ocIndex bIndex)
-                 (encodeString outputFile)
+                 outputFile
                  (toData bIndex ocIndex)
 
     scriptIO $ putStrLn "\ndone\n"
@@ -69,18 +69,20 @@ popvox Transform{..} = runScript $ do
 popvox RankBills{..} = runScript $ do
     scriptIO $ putStrLn "rank-bills"
 
-    pscores <-  fmap concat
+    pscores <-  fmap (indexPositionScores . concat)
             .   mapM readPositionScores
             =<< scriptIO (listDirectory rankBillScores)
-    F.print "Read {} pscores.\n" . Only $ length pscores
+    F.print "Read {} pscores.\n" . Only $ M.size pscores
 
     lindex  <-  fmap M.unions
             .   mapM readLegislatorIndex
             =<< scriptIO (listDirectory rankBillIndex)
     F.print "Read {} legislator IDs.\n" . Only $ M.size lindex
 
-    bills   <-  readBillDataDir rankBillBills
+    bills   <-  map (resolveIDs lindex) <$> readBillDataDir rankBillBills
     F.print "Read {} bill sponsor information.\n" . Only $ length bills
+
+    scriptIO . writeBillRanks rankBillOutput $ assembleRanks pscores bills
 
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
