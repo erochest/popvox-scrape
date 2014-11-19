@@ -27,6 +27,7 @@ import           Prelude                   hiding (FilePath, mapM)
 import           System.IO                 (hFlush, stdout)
 
 import           Paths_popvox_scrape
+import           PopVox.Bills
 import           PopVox.Legislators
 import           PopVox.MapLight
 import           PopVox.Output
@@ -66,15 +67,20 @@ popvox Transform{..} = runScript $ do
     scriptIO $ putStrLn "\ndone\n"
 
 popvox RankBills{..} = runScript $ do
+    scriptIO $ putStrLn "rank-bills"
+
     pscores <-  fmap concat
             .   mapM readPositionScores
             =<< scriptIO (listDirectory rankBillScores)
+    F.print "Read {} pscores.\n" . Only $ length pscores
+
     lindex  <-  fmap M.unions
             .   mapM readLegislatorIndex
             =<< scriptIO (listDirectory rankBillIndex)
-
-    F.print "Read {} pscores.\n" . Only $ length pscores
     F.print "Read {} legislator IDs.\n" . Only $ M.size lindex
+
+    bills   <-  readBillDataDir rankBillBills
+    F.print "Read {} bill sponsor information.\n" . Only $ length bills
 
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s

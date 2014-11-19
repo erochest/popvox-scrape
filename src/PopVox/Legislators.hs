@@ -20,7 +20,7 @@ import           Prelude                   hiding (FilePath)
 import           PopVox.Types
 
 
--- | Maps from icpsr to govtrack IDs. Doesn't contain any more information
+-- | Maps from thomas to icpsr IDs. Doesn't contain any more information
 -- about the reps.
 readLegislatorIndex :: FilePath -> Script LegislatorIndex
 readLegislatorIndex = EitherT
@@ -31,7 +31,9 @@ readLegislatorIndex = EitherT
 legislator :: Value -> LegislatorIndex
 legislator v = v ^.. _Array . traverse . key "id"
              & mapMaybe ( uncurry (liftA2 (,))
-                        . (intkey "icpsr" &&& intkey "govtrack"))
+                        . (strkey "thomas" &&& intkey "icpsr"))
+             & map (Thomas `bimap` ICPSR)
              & M.fromList
     where
-        intkey k = (^? key k . _Integer . to fromIntegral)
+        strkey k = preview (key k . _String)
+        intkey k = preview (key k . _Integer . to fromIntegral)

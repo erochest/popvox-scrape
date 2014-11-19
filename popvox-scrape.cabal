@@ -16,7 +16,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox.Contribs
+  exposed-modules:     PopVox.Bills
+                     , PopVox.Contribs
                      , PopVox.Fields
                      , PopVox.Legislators
                      , PopVox.MapLight
@@ -32,9 +33,10 @@ library
                      , lens
                      , aeson
                      , lens-aeson
-                     , conduit
                      , resourcet
+                     , conduit
                      , conduit-extra
+                     , conduit-combinators
                      , html-conduit
                      , errors
                      , mtl

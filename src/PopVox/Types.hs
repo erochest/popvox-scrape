@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DeriveTraversable          #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
@@ -32,6 +33,7 @@ module PopVox.Types
     , Bill(..)
     , Position
     , BillIndex
+    , BillSponsors(..)
 
     , OrgInfo(..)
     , BillInfo(..)
@@ -46,6 +48,7 @@ module PopVox.Types
 
     , PositionScore(..)
     , ICPSR(..)
+    , Thomas(..)
     , State
     , StateCode
     , District
@@ -61,6 +64,7 @@ import           Control.DeepSeq
 import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Types           (defaultOptions)
+import qualified Data.Aeson.Types           as AT
 import           Data.Bifunctor             (bimap, first)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as C8
@@ -485,6 +489,34 @@ instance ToJSON Bill where
     toJSON = genericToJSON defaultOptions
 
 
+data BillSponsors s = BillSponsors
+                    { billSponsorInfo :: !Bill
+                    , billSponsor     :: !(Maybe s)
+                    , billCosponsors  :: ![s]
+                    } deriving (Eq, Show, Generic)
+
+instance FromJSON (BillSponsors Thomas) where
+    parseJSON (Object o) =   BillSponsors
+                         <$> bill o
+                         <*> optional (o .: "sponsor" >>= parseJSON)
+                         <*> (o .: "cosponsors" >>= parseJSON)
+        where
+            bill b =   Bill
+                   <$> (b .: "number"    >>= parseJSON)
+                   <*> (b .: "bill_type" >>= bill_type)
+                   <*> (b .: "congress"  >>= parseJSON)
+            bill_type (String "hr")      = pure House
+            bill_type (String "hres")    = pure HouseResolution
+            bill_type (String "hconres") = pure HouseConcurrent
+            bill_type (String "hjres")   = pure HouseJoint
+            bill_type (String "s")       = pure Senate
+            bill_type (String "sres")    = pure SenateResolution
+            bill_type (String "sconres") = pure SenateConcurrent
+            bill_type (String "sjres")   = pure SenateJoint
+            bill_type bt                 = fail $ "Invalid BillType: " ++ show bt
+    parseJSON b          = fail $ "Invalid BillSponsors: " ++ show b
+
+
 data OrgInfo  = OrgInfo !OrgName !Disposition
               deriving (Show)
 
@@ -564,13 +596,24 @@ data PositionScore = PScore
 newtype ICPSR = ICPSR { unICPSR :: Int }
                 deriving (Eq, Show, Generic)
 
+instance Hashable ICPSR
+
+newtype Thomas = Thomas { unThomas :: T.Text }
+                 deriving (Show, Eq, Generic)
+
+instance Hashable Thomas
+
+instance FromJSON Thomas where
+    parseJSON (Object o) = Thomas <$> o .: "thomas_id"
+    parseJSON v          = fail $ "Invalid legislator information: " ++ show v
+
 type State       = T.Text
 type StateCode   = Int
 type District    = Int
 type Score       = Double
 type PScoreParty = Int
 
-type LegislatorIndex = M.HashMap Int Int
+type LegislatorIndex = M.HashMap Thomas ICPSR
 
 
 data PopVoxOptions
@@ -578,11 +621,11 @@ data PopVoxOptions
                 , maplightAPIDir  :: !FilePath
                 , outputFile      :: !FilePath
                 }
-    | RankBills { rankBillScores  :: !FilePath
-                , rankBillBills   :: !FilePath
-                , rankBillIndex   :: !FilePath
-                , rankBillOutput  :: !FilePath
+    | RankBills { rankBillScores :: !FilePath
+                , rankBillBills  :: !FilePath
+                , rankBillIndex  :: !FilePath
+                , rankBillOutput :: !FilePath
                 }
-    | TestJson  { maplightAPIDir  :: !FilePath }
+    | TestJson  { maplightAPIDir :: !FilePath }
     | TestCsv   { maplightDataDir :: !FilePath }
     deriving (Show)
