@@ -54,6 +54,7 @@ clean:
 
 cleandata:
 	-rm -rf data
+	-rm -rf maplight-data.csv bill-ranks.csv
 
 distclean: clean cleandata
 	cabal sandbox delete
@@ -70,21 +71,27 @@ build:
 
 rebuild: clean configure build
 
+maplight-data.csv: unzip-contributions maplight-data
+	cabal run -- transform --data-dir data --output $@
+
+bill-ranks.csv: govtrackdata junkord id-index
+	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=$@
+
 zips/contributions-2008.zip:
 	mkdir -p zips
-	curl ${CURL_OPTS} -o zips/contributions-2008.zip http://data.maplight.org/US/2008/records/cand.zip
+	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2008/records/cand.zip
 
 zips/contributions-2010.zip:
 	mkdir -p zips
-	curl ${CURL_OPTS} -o zips/contributions-2010.zip http://data.maplight.org/US/2010/records/cand.zip
+	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2010/records/cand.zip
 
 zips/contributions-2012.zip:
 	mkdir -p zips
-	curl ${CURL_OPTS} -o zips/contributions-2012.zip http://data.maplight.org/US/2012/records/cand.zip
+	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2012/records/cand.zip
 
 zips/contributions-2014.zip:
 	mkdir -p zips
-	curl ${CURL_OPTS} -o zips/contributions-2014.zip http://data.maplight.org/US/2014/records/cand.zip
+	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2014/records/cand.zip
 
 download-contributions: zips/contributions-2008.zip zips/contributions-2010.zip zips/contributions-2012.zip zips/contributions-2014.zip
 
