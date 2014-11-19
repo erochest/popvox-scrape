@@ -7,25 +7,27 @@ module Main where
 
 
 import           Control.Error
-import           Control.Monad                (forM_)
-import qualified Data.ByteString.Lazy         as LB
-import           Data.Csv                     hiding (Only, Parser)
+import           Control.Monad             (forM_)
+import qualified Data.ByteString.Lazy      as LB
+import           Data.Csv                  hiding (Only, Parser)
+import qualified Data.HashMap.Strict       as M
 import           Data.Monoid
-import qualified Data.Text                    as T
+import qualified Data.Text                 as T
 import           Data.Text.Buildable
 import           Data.Text.Format
-import qualified Data.Text.Format             as F
-import           Data.Text.Lazy.Builder       as B
+import qualified Data.Text.Format          as F
+import           Data.Text.Lazy.Builder    as B
 import           Data.Traversable
-import qualified Data.Vector                  as V
+import qualified Data.Vector               as V
 import           Data.Version
 import           Filesystem
-import           Filesystem.Path.CurrentOS    hiding (concat, decode)
+import           Filesystem.Path.CurrentOS hiding (concat, decode)
 import           Options.Applicative
-import           Prelude                      hiding (FilePath, mapM)
-import           System.IO                    (hFlush, stdout)
+import           Prelude                   hiding (FilePath, mapM)
+import           System.IO                 (hFlush, stdout)
 
 import           Paths_popvox_scrape
+import           PopVox.Legislators
 import           PopVox.MapLight
 import           PopVox.Output
 import           PopVox.Ranks
@@ -63,10 +65,16 @@ popvox Transform{..} = runScript $ do
 
     scriptIO $ putStrLn "\ndone\n"
 
-popvox RankBills{..} = runScript $
-        scriptIO (listDirectory rankBillScores)
-    >>= mapM readPositionScores
-    >>= mapM_ (scriptIO . Prelude.print) . concat
+popvox RankBills{..} = runScript $ do
+    pscores <-  fmap concat
+            .   mapM readPositionScores
+            =<< scriptIO (listDirectory rankBillScores)
+    lindex  <-  fmap M.unions
+            .   mapM readLegislatorIndex
+            =<< scriptIO (listDirectory rankBillIndex)
+
+    F.print "Read {} pscores.\n" . Only $ length pscores
+    F.print "Read {} legislator IDs.\n" . Only $ M.size lindex
 
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
@@ -131,6 +139,10 @@ rankBills'
     <*> fileOption (  short 'b' <> long "bill-dir" <> metavar "BILL_DATA_DIR"
                    <> help "The directory containing the bill JSON data\
                            \ from govtrack.us.")
+    <*> fileOption (  short 'l' <> long "legislator-index"
+                   <> metavar "LEGISLATOR_INDEX_DIR"
+                   <> help "The directory containing the legislator index\
+                           \ data from github.com/unitedstates/congress-legislators.")
     <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
                    <> help "The file to write the output to.")
 
@@ -154,16 +166,16 @@ testCsv'
 opts' :: Parser PopVoxOptions
 opts' = subparser
       ( command "transform"
-        (info transform'
+        (info (helper <*> transform')
             (progDesc "Read the data files, transform and join, and output."))
       <> command "rank-bills"
-         (info rankBills'
+         (info (helper <*> rankBills')
             (progDesc "Determine the bias of each bill from the sponsor's scores."))
       <> command "test-json"
-         (info testJson'
+         (info (helper <*> testJson')
             (progDesc "Read the JSON API files and test that we can parse them."))
       <> command "test-csv"
-         (info testCsv'
+         (info (helper <*> testCsv')
             (progDesc "Read the CSV data files and test that we can parse them."))
       )
 

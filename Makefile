@@ -17,7 +17,7 @@ transform:
 	cabal run -- transform --data-dir data --output maplight-data.csv
 
 rank-bills:
-	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --output=bill-ranks.csv
+	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=bill-ranks.csv
 
 test-json:
 	cabal run -- test-json
@@ -25,7 +25,7 @@ test-json:
 test-csv:
 	cabal run -- test-csv
 
-data: unzip-contributions maplight-api govtrackdata junkord
+data: unzip-contributions maplight-api govtrackdata junkord id-index
 
 # docs:
 # generate api documentation
@@ -164,5 +164,16 @@ junkord/SL01112D21_BSSE.dat:
 	curl ${CURL_OPTS} -o $@ ftp://voteview.com/junkord/SL01112D21_BSSE.dat
 
 junkord: junkord/SL01112D21_BSSE.dat junkord/HL01112D21_PRES_BSSE.DAT
+
+id-index: ids/legislators-current.yaml ids/legislators-historical.yaml
+
+ids/legislators-current.yaml:
+	mkdir -p ids
+	curl ${CURL_OPTS} -o $@ https://raw.githubusercontent.com/unitedstates/congress-legislators/master/legislators-current.yaml
+
+ids/legislators-historical.yaml:
+	mkdir -p ids
+	curl ${CURL_OPTS} -o $@ https://raw.githubusercontent.com/unitedstates/congress-legislators/master/legislators-historical.yaml
+
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint

@@ -52,6 +52,7 @@ module PopVox.Types
     , Score
     , PScoreParty
 
+    , LegislatorIndex
     ) where
 
 
@@ -569,6 +570,8 @@ type District    = Int
 type Score       = Double
 type PScoreParty = Int
 
+type LegislatorIndex = M.HashMap Int Int
+
 
 data PopVoxOptions
     = Transform { maplightDataDir :: !FilePath
@@ -577,6 +580,7 @@ data PopVoxOptions
                 }
     | RankBills { rankBillScores  :: !FilePath
                 , rankBillBills   :: !FilePath
+                , rankBillIndex   :: !FilePath
                 , rankBillOutput  :: !FilePath
                 }
     | TestJson  { maplightAPIDir  :: !FilePath }
