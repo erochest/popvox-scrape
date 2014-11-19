@@ -45,7 +45,7 @@ data: unzip-contributions maplight-api govtrackdata junkord id-index
 hlint:
 	hlint *.hs src specs
 
-tags: Main.hs src/PopVox/Bills.hs src/PopVox/Contribs.hs src/PopVox/Fields.hs src/PopVox/Legislators.hs src/PopVox/MapLight.hs src/PopVox/Output.hs src/PopVox/Ranks.hs src/PopVox/Types.hs
+tags: Main.hs src/PopVox/Bills.hs src/PopVox/Fields.hs src/PopVox/Legislators.hs src/PopVox/MapLight.hs src/PopVox/Output.hs src/PopVox/Ranks.hs src/PopVox/Types.hs src/PopVox/Types/Bills.hs src/PopVox/Types/Common.hs src/PopVox/Types/Contrib.hs src/PopVox/Types/Orgs.hs src/PopVox/Types/Output.hs src/PopVox/Types/Position.hs src/PopVox/Utils.hs
 	hasktags --ctags Main.hs src/
 
 clean:

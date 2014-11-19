@@ -1,12 +1,22 @@
 module PopVox.Contribs
-    ( listContribs
+    ( majorParty
+    , indexContribs'
     ) where
 
 
+import qualified Data.Vector     as V
+
+import           PopVox.MapLight
 import           PopVox.Types
 
 
-listContribs :: [Int] -> [ContribEntry]
-listContribs years =
-    [ Contrib p t y | y <- years, t <- [minBound..maxBound], p <- [minBound..maxBound] ]
+majorParty :: Party -> Bool
+majorParty Dem = True
+majorParty GOP = True
+majorParty _   = False
+
+indexContribs' :: (Header, V.Vector OrgContrib) -> OrgContribIndex
+indexContribs' = indexContribs
+               . V.filter (majorParty . contribParty . orgContribEntry)
+               . snd
 

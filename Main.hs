@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 
 module Main where
@@ -13,10 +12,8 @@ import           Data.Csv                  hiding (Only, Parser)
 import qualified Data.HashMap.Strict       as M
 import           Data.Monoid
 import qualified Data.Text                 as T
-import           Data.Text.Buildable
 import           Data.Text.Format
 import qualified Data.Text.Format          as F
-import           Data.Text.Lazy.Builder    as B
 import           Data.Traversable
 import qualified Data.Vector               as V
 import           Data.Version
@@ -28,11 +25,13 @@ import           System.IO                 (hFlush, stdout)
 
 import           Paths_popvox_scrape
 import           PopVox.Bills
+import           PopVox.Contribs
 import           PopVox.Legislators
 import           PopVox.MapLight
 import           PopVox.Output
 import           PopVox.Ranks
 import           PopVox.Types
+import           PopVox.Utils
 
 
 sessions :: [Session]
@@ -101,25 +100,6 @@ popvox TestCsv{..} = do
         case csv of
             Right rows -> F.print "{} rows\n" . Only . V.length $ rows
             Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
-
-log' :: Buildable a => F.Format -> a -> IO a
-log' f x = F.print f (Only x) >> return x
-
-withLog :: Buildable a => (a -> Script b) -> F.Format -> a -> Script b
-withLog m f a = scriptIO (F.print f $ Only a) >> m a
-
-instance Buildable FilePath where
-    build = B.fromString . encodeString
-
-majorParty :: Party -> Bool
-majorParty Dem = True
-majorParty GOP = True
-majorParty _   = False
-
-indexContribs' :: (Header, V.Vector OrgContrib) -> OrgContribIndex
-indexContribs' = indexContribs
-               . V.filter (majorParty . contribParty . orgContribEntry)
-               . snd
 
 
 transform' :: Parser PopVoxOptions

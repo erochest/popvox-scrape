@@ -24,7 +24,13 @@ library
                      , PopVox.Output
                      , PopVox.Ranks
                      , PopVox.Types
-  -- other-modules:       
+                     , PopVox.Utils
+  other-modules:       PopVox.Types.Bills
+                     , PopVox.Types.Common
+                     , PopVox.Types.Contrib
+                     , PopVox.Types.Orgs
+                     , PopVox.Types.Output
+                     , PopVox.Types.Position
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , bytestring
