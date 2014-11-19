@@ -28,6 +28,7 @@ import           System.IO                    (hFlush, stdout)
 import           Paths_popvox_scrape
 import           PopVox.MapLight
 import           PopVox.Output
+import           PopVox.Ranks
 import           PopVox.Types
 
 
@@ -62,7 +63,10 @@ popvox Transform{..} = runScript $ do
 
     scriptIO $ putStrLn "\ndone\n"
 
-popvox RankBills{..} = runScript $ undefined
+popvox RankBills{..} = runScript $
+        scriptIO (listDirectory rankBillScores)
+    >>= mapM readPositionScores
+    >>= mapM_ (scriptIO . Prelude.print) . concat
 
 popvox TestJson{..} = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
@@ -152,6 +156,9 @@ opts' = subparser
       ( command "transform"
         (info transform'
             (progDesc "Read the data files, transform and join, and output."))
+      <> command "rank-bills"
+         (info rankBills'
+            (progDesc "Determine the bias of each bill from the sponsor's scores."))
       <> command "test-json"
          (info testJson'
             (progDesc "Read the JSON API files and test that we can parse them."))

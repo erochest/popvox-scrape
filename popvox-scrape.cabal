@@ -19,6 +19,7 @@ library
   exposed-modules:     PopVox.Contribs
                      , PopVox.MapLight
                      , PopVox.Output
+                     , PopVox.Ranks
                      , PopVox.Types
   -- other-modules:       
   -- other-extensions:    

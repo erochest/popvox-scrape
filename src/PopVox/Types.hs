@@ -46,6 +46,7 @@ module PopVox.Types
 
     , PositionScore(..)
     , ICPSR(..)
+    , State
     , StateCode
     , District
     , Score
@@ -550,16 +551,16 @@ instance ToNamedRecord a => ToNamedRecord (WithHeader a) where
                        | otherwise      = M.insert n mempty m
 
 data PositionScore = PScore
-                   { psCongress  :: !Session
-                   , psICPSR     :: !ICPSR
-                   , psStateCode :: !State
-                   , psDistrict  :: !District
-                   , psParty     :: !(Maybe Party)
-                   , psName      :: !T.Text
-                   , psScore     :: !Score
+                   { psCongress :: !Session
+                   , psICPSR    :: !ICPSR
+                   , psState    :: !State
+                   , psDistrict :: !District
+                   , psParty    :: !(Maybe Party)
+                   , psName     :: !T.Text
+                   , psScore    :: !Score
                    } deriving (Eq, Show, Generic)
 
-newtype ICPSR = ICPSR { unICPSR :: T.Text }
+newtype ICPSR = ICPSR { unICPSR :: Int }
                 deriving (Eq, Show, Generic)
 
 type State       = T.Text
@@ -571,7 +572,7 @@ type PScoreParty = Int
 
 data PopVoxOptions
     = Transform { maplightDataDir :: !FilePath
-                , maplightAPIDir  :: !FilePathhttp://voteview.com/dwnominate.asp
+                , maplightAPIDir  :: !FilePath
                 , outputFile      :: !FilePath
                 }
     | RankBills { rankBillScores  :: !FilePath
