@@ -16,49 +16,48 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox
-                     , PopVox.API
-                     , PopVox.OpenSecrets
-                     , PopVox.OpenSecrets.Types
-                     , PopVox.OpenSecrets.Types.Candidates
-                     , PopVox.OpenSecrets.Types.Committees
-                     , PopVox.OpenSecrets.Types.Common
-                     , PopVox.OpenSecrets.Types.Expenditures
-                     , PopVox.OpenSecrets.Types.Individual
-                     , PopVox.OpenSecrets.Types.PACCandidate
-                     , PopVox.OpenSecrets.Types.PACtoPAC
-                     , PopVox.OpenSecrets.Output
-                     , PopVox.OpenSecrets.Utils
+  exposed-modules:     PopVox.Bills
+                     , PopVox.Contribs
+                     , PopVox.Fields
+                     , PopVox.Legislators
+                     , PopVox.MapLight
+                     , PopVox.Output
+                     , PopVox.Ranks
                      , PopVox.Types
-  -- other-modules:       
+                     , PopVox.Utils
+  other-modules:       PopVox.Types.Bills
+                     , PopVox.Types.Common
+                     , PopVox.Types.Contrib
+                     , PopVox.Types.Orgs
+                     , PopVox.Types.Output
+                     , PopVox.Types.Position
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
+                     , bytestring
                      , text
-                     , wreq
+                     , text-format
+                     , lens
                      , aeson
                      , lens-aeson
-                     , conduit
                      , resourcet
+                     , conduit
                      , conduit-extra
-                     , csv-conduit
+                     , conduit-combinators
                      , html-conduit
                      , errors
                      , mtl
                      , transformers
-                     , lens
-                     , acid-state
-                     , monad-par
-                     , system-filepath
-                     , vector
-                     , bytestring
-                     , attoparsec
-                     , time
-                     , old-locale
-                     , errors
-                     , hashable
-                     , containers
                      , unordered-containers
-                     , dlist
+                     , hashable
+                     , deepseq
+                     , bytestring
+                     , bifunctors
+                     , system-filepath
+                     , system-fileio
+                     , scientific
+                     , vector
+                     , cassava
+                     , yaml
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -69,24 +68,20 @@ executable popvox-scrape
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , popvox-scrape
+                     , bytestring
                      , text
+                     , text-format
                      , optparse-applicative
                      , errors
                      , mtl
                      , transformers
                      , system-filepath
-                     , vector
-                     , csv-conduit
-                     , resourcet
-                     , bytestring
+                     , system-fileio
                      , conduit
-                     , conduit-extra
-                     , bifunctors
-                     , text-format
-                     , lens
+                     , resourcet
+                     , vector
+                     , cassava
                      , unordered-containers
-                     , containers
-                     , hashable
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 
