@@ -10,6 +10,7 @@ module PopVox.Types.Common
     ( Header
     , HeaderSet
 
+    , OrgID
     , OrgName
     , Year
     , State
@@ -57,6 +58,7 @@ import           PopVox.Utils
 
 
 type HeaderSet       = S.HashSet ByteString
+type OrgID           = T.Text
 type OrgName         = T.Text
 type Year            = Int
 type State           = T.Text

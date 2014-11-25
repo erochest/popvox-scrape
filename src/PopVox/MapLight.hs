@@ -53,7 +53,7 @@ indexBills :: [BillInfo] -> OrgBillIndex
 indexBills = HashIndex . foldMap go
     where
         go (BillInfo bill orgInfos) = foldMap (go' bill) orgInfos
-        go' bill (OrgInfo org d) = M.singleton org $ M.singleton bill d
+        go' bill (OrgInfo _ org d) = M.singleton org $ M.singleton bill d
 
 readContribs :: FilePath -> Script (Header, V.Vector OrgContrib)
 readContribs fn =

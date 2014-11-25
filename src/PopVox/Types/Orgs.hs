@@ -8,6 +8,7 @@ module PopVox.Types.Orgs
     , OrgContrib(..)
 
     , OrgInfo(..)
+    , orgInfoID
     , orgInfoName
     , orgInfoDisposition
     ) where
@@ -49,22 +50,27 @@ instance ToNamedRecord OrgContrib where
         <> toNamedRecord c
 
 
-data OrgInfo  = OrgInfo !OrgName !Disposition
+data OrgInfo  = OrgInfo !OrgID !OrgName !Disposition
               deriving (Show, Generic)
 
+orgInfoID :: Lens' OrgInfo OrgID
+orgInfoID f (OrgInfo i n d) = fmap (\i' -> OrgInfo i' n d) (f i)
+
 orgInfoName :: Lens' OrgInfo OrgName
-orgInfoName f (OrgInfo n d) = fmap (`OrgInfo` d) (f n)
+orgInfoName f (OrgInfo i n d) = fmap (\n' -> OrgInfo i n' d) (f n)
 
 orgInfoDisposition :: Lens' OrgInfo Disposition
-orgInfoDisposition f (OrgInfo n d) = fmap (OrgInfo n) (f d)
+orgInfoDisposition f (OrgInfo i n d) = fmap (OrgInfo i n) (f d)
 
 instance FromJSON OrgInfo where
     parseJSON (Object o) =   OrgInfo
-                         <$> o .: "name"
+                         <$> o .: "organization_id"
+                         <*> o .: "name"
                          <*> o .: "disposition"
     parseJSON o          = fail $ "Invalid OrgInfo: " ++ show o
 
 instance ToJSON OrgInfo where
-    toJSON (OrgInfo n d) = object [ "name"        A..= n
-                                  , "disposition" A..= d
-                                  ]
+    toJSON (OrgInfo i n d) = object [ "organization_id" A..= i
+                                    , "name"            A..= n
+                                    , "disposition"     A..= d
+                                    ]
