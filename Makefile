@@ -135,7 +135,11 @@ maplight-cache/112.json:
 	mkdir -p maplight-cache
 	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=112&include_organizations=1&has_organizations=0'
 
-maplight-api: maplight-cache/109.json maplight-cache/110.json maplight-cache/111.json maplight-cache/112.json 
+maplight-cache/113.json:
+	mkdir -p maplight-cache
+	curl ${CURL_OPTS} -o $@ 'http://maplight.org/services_open_api/map.bill_list_v1.json?apikey=${MAPLIGHT_APIKEY}&jurisdiction=us&session=113&include_organizations=1&has_organizations=0'
+
+maplight-api: maplight-cache/109.json maplight-cache/110.json maplight-cache/111.json maplight-cache/112.json maplight-cache/113.json
 
 clear-cache:
 	-rm -rf maplight-cache
