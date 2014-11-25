@@ -9,12 +9,17 @@ module PopVox.Types.Bills
     , BillNo(..)
     , BillType(..)
     , BillSponsors(..)
+
     , BillInfo(..)
+    , billInfoBill
+    , billInfoOrgs
+
     , BillIndex
     ) where
 
 
 import           Control.Applicative
+import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Types           (defaultOptions)
 import           Data.Csv                   hiding ((.:))
@@ -164,10 +169,19 @@ instance FromJSON (BillSponsors Thomas) where
 
 
 data BillInfo = BillInfo !Bill ![OrgInfo]
-              deriving (Show)
+              deriving (Show, Generic)
+
+billInfoBill :: Lens' BillInfo Bill
+billInfoBill f (BillInfo b os) = fmap (`BillInfo` os) (f b)
+
+billInfoOrgs :: Lens' BillInfo [OrgInfo]
+billInfoOrgs f (BillInfo b os) = fmap (BillInfo b) (f os)
 
 instance FromJSON BillInfo where
     parseJSON v@(Object o) =   BillInfo
                            <$> parseJSON v
                            <*> o .: "organizations"
     parseJSON b            = fail $ "Invalid BillInfo: " ++ show b
+
+instance ToJSON BillInfo where
+    toJSON = genericToJSON defaultOptions

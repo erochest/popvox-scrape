@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 
@@ -5,15 +6,21 @@ module PopVox.Types.Orgs
     ( OrgContribIndex
     , OrgContribIndex'
     , OrgContrib(..)
+
     , OrgInfo(..)
+    , orgInfoName
+    , orgInfoDisposition
     ) where
 
 
 import           Control.Applicative
+import           Control.Lens
 import           Data.Aeson
+import qualified Data.Aeson           as A
 import           Data.Csv             hiding ((.:))
 import qualified Data.Csv             as CSV
 import           Data.Monoid
+import           GHC.Generics
 
 import           PopVox.Types.Common
 import           PopVox.Types.Contrib
@@ -43,7 +50,13 @@ instance ToNamedRecord OrgContrib where
 
 
 data OrgInfo  = OrgInfo !OrgName !Disposition
-              deriving (Show)
+              deriving (Show, Generic)
+
+orgInfoName :: Lens' OrgInfo OrgName
+orgInfoName f (OrgInfo n d) = fmap (`OrgInfo` d) (f n)
+
+orgInfoDisposition :: Lens' OrgInfo Disposition
+orgInfoDisposition f (OrgInfo n d) = fmap (OrgInfo n) (f d)
 
 instance FromJSON OrgInfo where
     parseJSON (Object o) =   OrgInfo
@@ -51,3 +64,7 @@ instance FromJSON OrgInfo where
                          <*> o .: "disposition"
     parseJSON o          = fail $ "Invalid OrgInfo: " ++ show o
 
+instance ToJSON OrgInfo where
+    toJSON (OrgInfo n d) = object [ "name"        A..= n
+                                  , "disposition" A..= d
+                                  ]

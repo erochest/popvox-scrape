@@ -1,15 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TupleSections     #-}
 
 
 module Main where
 
 
 import           Control.Error
+import           Control.Lens              hiding (argument)
 import           Control.Monad             (forM_)
+import           Data.Aeson
 import qualified Data.ByteString.Lazy      as LB
 import           Data.Csv                  hiding (Only, Parser)
 import qualified Data.HashMap.Strict       as M
+import qualified Data.List                 as L
 import           Data.Monoid
 import qualified Data.Text                 as T
 import           Data.Text.Format
@@ -101,6 +105,16 @@ popvox TestCsv{..} = do
             Right rows -> F.print "{} rows\n" . Only . V.length $ rows
             Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
 
+popvox SearchPosition{..} = runScript $ do
+    hits <- fmap M.fromList . forM sessions $ \s ->
+            (("session" <>) . T.pack . show $ getSession s,) . filter isHit
+        <$> billList maplightAPIDir s
+    scriptIO . LB.putStr $ Data.Aeson.encode hits
+    where
+        isHit :: BillInfo -> Bool
+        isHit = any (maplightOrg `T.isInfixOf`) . getOrg
+        getOrg bi = bi ^.. billInfoOrgs . traverse . orgInfoName
+
 
 transform' :: Parser PopVoxOptions
 transform'
@@ -151,6 +165,17 @@ testCsv'
                    <> help "The directory containing the contribution\
                            \ data. Defaults to './data'.")
 
+searchPosition' :: Parser PopVoxOptions
+searchPosition'
+    =   SearchPosition
+    <$> fileOption (  short 'c' <> long "api-dir"
+                   <> metavar "MAPLIGHT_API_DIR"
+                   <> value "./maplight-cache"
+                   <> help "A directory containing API responses.\
+                           \ Defaults to './maplight-cache'.")
+    <*> textArg    (  metavar "SEARCH_TARGET"
+                   <> help "The name of the organization to search for.")
+
 opts' :: Parser PopVoxOptions
 opts' = subparser
       ( command "transform"
@@ -165,6 +190,9 @@ opts' = subparser
       <> command "test-csv"
          (info (helper <*> testCsv')
             (progDesc "Read the CSV data files and test that we can parse them."))
+      <> command "search-pos"
+         (info (helper <*> searchPosition')
+            (progDesc "Search the bill information organizations."))
       )
 
 opts :: ParserInfo PopVoxOptions
@@ -179,3 +207,6 @@ textOpt = option (T.pack <$> str)
 
 fileOption :: Mod OptionFields FilePath -> Parser FilePath
 fileOption = option (decodeString <$> str)
+
+textArg :: Mod ArgumentFields T.Text -> Parser T.Text
+textArg = argument (T.pack <$> str)

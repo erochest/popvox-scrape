@@ -78,6 +78,9 @@ data PopVoxOptions
                 }
     | TestJson  { maplightAPIDir :: !FilePath }
     | TestCsv   { maplightDataDir :: !FilePath }
+    | SearchPosition { maplightAPIDir :: !FilePath
+                     , maplightOrg    :: !T.Text
+                     }
     deriving (Show)
 
 
