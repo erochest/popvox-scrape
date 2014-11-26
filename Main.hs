@@ -13,7 +13,6 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy      as LB
 import           Data.Csv                  hiding (Only, Parser)
 import qualified Data.HashMap.Strict       as M
-import qualified Data.List                 as L
 import           Data.Monoid
 import qualified Data.Text                 as T
 import           Data.Text.Format
