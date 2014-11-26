@@ -39,7 +39,7 @@ import           PopVox.Utils
 
 
 sessions :: [Session]
-sessions = [109, 110, 111, 112]
+sessions = [109, 110, 111, 112, 113]
 
 
 main :: IO ()
