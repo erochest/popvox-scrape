@@ -1,6 +1,6 @@
 
 MAPLIGHT_APIKEY=
-CURL_OPTS=--max-time 90
+CURL_OPTS=--max-time 300
 
 all: run
 
