@@ -1,0 +1,24 @@
+#!/bin/bash
+
+source .env
+CURL_OPTS="--max-time 900"
+N="113"
+OUTPUT="maplight-cache/${N}.json"
+
+if [ -f $OUTPUT ]
+then
+	rm -f $OUTPUT
+fi
+
+URL='http://maplight.org/services_open_api/map.bill_list_v1.json?apikey='"${API_KEY}"'&jurisdiction=us&session='"${N}"'&include_organizations=1&has_organizations=0'
+echo "Getting ${URL} ..."
+curl ${CURL_OPTS} -o $OUTPUT $URL
+
+if [ "$?" == "0" ]
+then
+	echo "Success!"
+else
+	echo "Boo! Trying again."
+	exec $0
+fi
+
