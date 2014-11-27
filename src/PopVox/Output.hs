@@ -45,7 +45,9 @@ contribHeaders :: OrgContribIndex -> HeaderSet
 contribHeaders = indexHeaders (S.unions . map (getKeySet . unIndex))
 
 billHeaders :: OrgBillIndex -> HeaderSet
-billHeaders = indexHeaders (S.fromList . map fst . concatMap M.toList)
+billHeaders = indexHeaders (S.fromList . map fst . concatMap toList')
+    where
+        toList' = M.toList . unIndex
 
 totalHeaders :: OrgContribIndex -> HeaderSet
 totalHeaders = indexHeaders ( S.fromList

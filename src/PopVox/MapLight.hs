@@ -50,10 +50,16 @@ billList dataDir session =   hoistEither
                          )
 
 indexBills :: [BillInfo] -> OrgBillIndex
-indexBills = HashIndex . foldMap go
+indexBills = foldMap go
     where
+        go :: BillInfo -> OrgBillIndex
         go (BillInfo bill orgInfos) = foldMap (go' bill) orgInfos
-        go' bill (OrgInfo _ org d) = M.singleton org $ M.singleton bill d
+
+        go' :: Bill -> OrgInfo -> OrgBillIndex
+        go' bill (OrgInfo _ org d) =
+            singleHI org $ singleHI bill d
+
+        singleHI k v = HashIndex $ M.singleton k v
 
 readContribs :: FilePath -> Script (Header, V.Vector OrgContrib)
 readContribs fn =
@@ -78,7 +84,8 @@ toData (HashIndex billIndex) (HashIndex contribIndex) =
 dumpBillIndex :: OrgBillIndex -> IO ()
 dumpBillIndex = dump "bill-index.json" spreadOrg
     where
-        spreadOrg (name, bindex) = map (name,) $ M.toList bindex
+        spreadOrg :: (OrgName, BillIndex) -> [(OrgName, (Bill, Disposition))]
+        spreadOrg (name, bindex) = map (name,) . M.toList $ unIndex bindex
 
 dumpContribIndex :: OrgContribIndex -> IO ()
 dumpContribIndex = dump "contrib-index.json" spreadOrg

@@ -46,7 +46,7 @@ contribsRecord :: ContribIndex' -> [(BS.ByteString, BS.ByteString)]
 contribsRecord = map (columnbs `bimap` showbs) . M.toList . unIndex
 
 billsRecord :: BillIndex -> [(BS.ByteString, BS.ByteString)]
-billsRecord = map (columnbs `bimap` (showbs . fromEnum)) . M.toList
+billsRecord = map (columnbs `bimap` (showbs . fromEnum)) . M.toList . unIndex
 
 totalsRecord :: ContribIndex -> [(BS.ByteString, BS.ByteString)]
 totalsRecord = M.toList

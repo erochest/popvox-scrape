@@ -24,7 +24,6 @@ import           Data.Aeson
 import           Data.Aeson.Types           (defaultOptions)
 import           Data.Csv                   hiding ((.:))
 import           Data.Hashable
-import qualified Data.HashMap.Strict        as M
 import           Data.Monoid
 import           Data.Text.Encoding         (encodeUtf8)
 import qualified Data.Text.Lazy.Builder     as B
@@ -36,7 +35,7 @@ import           PopVox.Types.Orgs
 import           PopVox.Utils
 
 
-type BillIndex = M.HashMap Bill Disposition
+type BillIndex = HashIndex Bill Disposition
 
 newtype BillNo = BillNo { getBillNo :: Int }
                  deriving (Show, Eq, Enum, Real, Integral, Num, Ord, Generic)

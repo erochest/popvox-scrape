@@ -282,6 +282,10 @@ data Disposition = Support
                  | Oppose
                  deriving (Show, Eq, Generic)
 
+instance Monoid Disposition where
+    mempty = Neutral
+    mappend a b = toEnum $ fromEnum a + fromEnum b
+
 instance Enum Disposition where
     toEnum n | n < 0     = Oppose
              | n == 0    = Neutral
