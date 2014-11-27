@@ -83,6 +83,9 @@ data PopVoxOptions
     | SearchPosition { maplightAPIDir :: !FilePath
                      , maplightOrg    :: !T.Text
                      }
+    | ReportOn  { reportCsvFile :: !FilePath
+                , reportTarget  :: !T.Text
+                }
     deriving (Show)
 
 

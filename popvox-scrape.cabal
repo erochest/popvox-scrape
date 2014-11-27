@@ -84,6 +84,7 @@ executable popvox-scrape
                      , unordered-containers
                      , aeson
                      , lens
+                     , bifunctors
   -- hs-source-dirs:      .
   default-language:    Haskell2010
 

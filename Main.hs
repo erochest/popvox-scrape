@@ -1,6 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
 
 
 module Main where
@@ -10,6 +11,8 @@ import           Control.Error
 import           Control.Lens              hiding (argument)
 import           Control.Monad             (forM_)
 import           Data.Aeson
+import           Data.Bifunctor
+import qualified Data.ByteString           as B
 import qualified Data.ByteString.Lazy      as LB
 import           Data.Csv                  hiding (Only, Parser)
 import qualified Data.HashMap.Strict       as M
@@ -105,14 +108,26 @@ popvox TestCsv{..} = do
             Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
 
 popvox SearchPosition{..} = runScript $ do
-    hits <- fmap M.fromList . forM sessions $ \s ->
-            (("session" <>) . T.pack . show $ getSession s,) . filter isHit
-        <$> billList maplightAPIDir s
+    hits <-  fmap M.fromList . forM sessions $ \s ->
+             (("session" <>) . T.pack . show $ getSession s,) . filter isHit
+         <$> billList maplightAPIDir s
     scriptIO . LB.putStr $ Data.Aeson.encode hits
     where
         isHit :: BillInfo -> Bool
         isHit = any (maplightOrg `T.isInfixOf`) . getOrg
         getOrg bi = bi ^.. billInfoOrgs . traverse . orgInfoName
+
+popvox ReportOn{..} = runScript $
+        (EitherT . fmap decodeByName . LB.readFile . encodeString) reportCsvFile
+    >>= V.mapM_ dumpOrg . V.filter isHit . snd
+    where
+        isHit = T.isInfixOf reportTarget . M.lookupDefault "" "Organization"
+        dumpOrg :: M.HashMap B.ByteString T.Text -> Script ()
+        dumpOrg org = scriptIO $ do
+            mapM_ (F.print "\t{} => {}\n" . first Shown)
+                . filter (not . T.null . snd)
+                $ M.toList org
+            putStrLn ""
 
 
 transform' :: Parser PopVoxOptions
@@ -175,6 +190,17 @@ searchPosition'
     <*> textArg    (  metavar "SEARCH_TARGET"
                    <> help "The name of the organization to search for.")
 
+reportOn' :: Parser PopVoxOptions
+reportOn'
+    =   ReportOn
+    <$> fileOption (  short 'c' <> long "csv-file"
+                   <> metavar "CSV_OUTPUT_FILE"
+                   <> value "./maplight-data.csv"
+                   <> help "An output file to look for information\
+                           \ about an organization.")
+    <*> textArg    (  metavar "SEARCH_TARGET"
+                   <> help "The name of the organization to search for.")
+
 opts' :: Parser PopVoxOptions
 opts' = subparser
       ( command "transform"
@@ -192,6 +218,10 @@ opts' = subparser
       <> command "search-pos"
          (info (helper <*> searchPosition')
             (progDesc "Search the bill information organizations."))
+      <> command "report-on"
+         (info (helper <*> reportOn')
+            (progDesc "Report on the information in the data file for\
+                      \ an organization."))
       )
 
 opts :: ParserInfo PopVoxOptions
