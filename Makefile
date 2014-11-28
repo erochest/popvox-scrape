@@ -27,11 +27,11 @@ test-csv:
 
 data: unzip-contributions maplight-api govtrackdata junkord id-index
 
+package: transform rank-bills
+	zip maplight-data-`timestamp`.zip maplight-data.csv bill-ranks.csv
+
 # docs:
 # generate api documentation
-#
-# package:
-# build a release tarball or executable
 #
 # dev:
 # start dev server or process. `vagrant up`, `yesod devel`, etc.
