@@ -33,19 +33,19 @@ type OrgContribIndex' = HashIndex OrgName ContribIndex'
 data OrgContrib = OrgContrib
                 { orgContribName   :: !OrgName
                 , orgContribEntry  :: !ContribEntry
-                , orgContribAmount :: !Int
+                , orgContribAmount :: !Contrib
                 } deriving (Show, Eq)
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
-                       <$> m CSV..: "DonorNameNormalized"   -- 48
+                       <$> m CSV..: "contributor_name"
                        <*> parseNamedRecord m
-                       <*> m CSV..: "TransactionAmount"     -- 13
+                       <*> m CSV..: "amount"
 
 instance ToNamedRecord OrgContrib where
     toNamedRecord (OrgContrib n c a) =
-        namedRecord [ "DonorNameNormalized" CSV..= toField n
-                    , "TransactionAmount"   CSV..= toField a
+        namedRecord [ "contributor_name" CSV..= toField n
+                    , "amount"           CSV..= toField a
                     ]
         <> toNamedRecord c
 

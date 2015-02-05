@@ -58,10 +58,8 @@ popvox Transform{..} = runScript $ do
 
     scriptIO
         . F.print "\nReading contributor data from {}...\n"
-        . Only $ encodeString maplightDataDir
-    ocIndex <-  fmap (mconcat . map indexContribs')
-            .   mapM (readContribs `withLog` "\tReading input file {}...\n")
-            =<< scriptIO (listDirectory maplightDataDir)
+        . Only $ encodeString contribDataFile
+    ocIndex <- indexContribs' <$> readContribs contribDataFile
     scriptIO $ dumpContribIndex ocIndex
 
     scriptIO . F.print "\nWriting data to {}...\n" $ Only outputFile
@@ -97,15 +95,14 @@ popvox TestJson{..} = forM_ sessions $ \s -> do
         Left e  -> F.print "ERROR: {}\n" $ Only e
 
 popvox TestCsv{..} = do
-    files <- map encodeString <$> listDirectory maplightDataDir
-    forM_ files $ \fn -> do
-        F.print "Reading {}... " $ Only fn
-        hFlush stdout
-        s <- LB.readFile fn
-        let csv = snd <$> decodeByName s :: Either String (V.Vector OrgContrib)
-        case csv of
-            Right rows -> F.print "{} rows\n" . Only . V.length $ rows
-            Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
+    let fn = encodeString contribDataFile
+    F.print "Reading {}... " $ Only fn
+    hFlush stdout
+    s <- LB.readFile fn
+    let csv = snd <$> decodeByName s :: Either String (V.Vector OrgContrib)
+    case csv of
+        Right rows -> F.print "{} rows\n" . Only . V.length $ rows
+        Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
 
 popvox SearchPosition{..} = runScript $ do
     hits <-  fmap M.fromList . forM sessions $ \s ->
@@ -133,10 +130,10 @@ popvox ReportOn{..} = runScript $
 transform' :: Parser PopVoxOptions
 transform'
     =   Transform
-    <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
-                   <> metavar "MAPLIGHT_DATA_DIR"
-                   <> help "The directory containing the contribution\
-                           \ data. Defaults to './data'.")
+    <$> fileOption (  short 'd' <> long "data-file" <> value "./data.csv"
+                   <> metavar "CONTRIB_DATA_FILE"
+                   <> help "The file containing the contribution\
+                           \ data. Defaults to './data.csv'.")
     <*> fileOption (  short 'c' <> long "api-dir"
                    <> metavar "MAPLIGHT_API_DIR"
                    <> value "./maplight-cache"
@@ -174,10 +171,10 @@ testJson'
 testCsv' :: Parser PopVoxOptions
 testCsv'
     =   TestCsv
-    <$> fileOption (  short 'd' <> long "data-dir" <> value "./data"
-                   <> metavar "MAPLIGHT_DATA_DIR"
+    <$> fileOption (  short 'd' <> long "data-file" <> value "./data.csv"
+                   <> metavar "CONTRIB_DATA_FILE"
                    <> help "The directory containing the contribution\
-                           \ data. Defaults to './data'.")
+                           \ data. Defaults to './data.csv'.")
 
 searchPosition' :: Parser PopVoxOptions
 searchPosition'

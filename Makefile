@@ -1,5 +1,4 @@
 
-MAPLIGHT_APIKEY=
 CURL_OPTS=--max-time 300
 
 all: run
@@ -13,22 +12,27 @@ test: test-json test-csv
 
 run: test transform rank-bills
 
-transform:
-	cabal run -- transform --data-dir data --output maplight-data.csv
+transform: contrib-data.csv
 
 rank-bills:
-	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=bill-ranks.csv
+	cabal run popvox-scrape -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=bill-ranks.csv
 
 test-json:
-	cabal run -- test-json
+	cabal run popvox-scrape -- test-json
 
-test-csv:
-	cabal run -- test-csv
+test-csv: dime-2012.csv
+	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv
 
-data: unzip-contributions maplight-api govtrackdata junkord id-index
+test-sample:
+	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv
+
+clean-dime:
+	cabal run clean-dime
+
+data: contrib-data.csv govtrackdata junkord id-index
 
 package: transform rank-bills
-	zip maplight-data-`timestamp`.zip maplight-data.csv bill-ranks.csv
+	zip contrib-data-`timestamp`.zip contrib-data.csv bill-ranks.csv
 
 # docs:
 # generate api documentation
@@ -54,7 +58,7 @@ clean:
 
 cleandata:
 	-rm -rf data
-	-rm -rf maplight-data.csv bill-ranks.csv
+	-rm -rf contrib-data.csv bill-ranks.csv
 
 distclean: clean cleandata
 	cabal sandbox delete
@@ -71,47 +75,11 @@ build:
 
 rebuild: clean configure build
 
-maplight-data.csv: unzip-contributions maplight-data
-	cabal run -- transform --data-dir data --output $@
+contrib-data.csv: dime-2012.csv
+	cabal run popvox-scrape -- transform --data-file $< --output $@
 
 bill-ranks.csv: govtrackdata junkord id-index
 	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=$@
-
-zips/contributions-2008.zip:
-	mkdir -p zips
-	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2008/records/cand.zip
-
-zips/contributions-2010.zip:
-	mkdir -p zips
-	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2010/records/cand.zip
-
-zips/contributions-2012.zip:
-	mkdir -p zips
-	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2012/records/cand.zip
-
-zips/contributions-2014.zip:
-	mkdir -p zips
-	curl ${CURL_OPTS} -o $@ http://data.maplight.org/US/2014/records/cand.zip
-
-download-contributions: zips/contributions-2008.zip zips/contributions-2010.zip zips/contributions-2012.zip zips/contributions-2014.zip
-
-data/2008_cand.csv: zips/contributions-2008.zip
-	mkdir -p data
-	unzip -d data zips/contributions-2008.zip
-
-data/2010_cand.csv: zips/contributions-2010.zip
-	mkdir -p data
-	unzip -d data zips/contributions-2010.zip
-
-data/2012_cand.csv: zips/contributions-2012.zip
-	mkdir -p data
-	unzip -d data zips/contributions-2012.zip
-
-data/2014_cand.csv: zips/contributions-2014.zip
-	mkdir -p data
-	unzip -d data zips/contributions-2014.zip
-
-unzip-contributions: data/2008_cand.csv data/2010_cand.csv data/2012_cand.csv data/2014_cand.csv
 
 clean-contributions:
 	sed -i '.bak' -e 's/\\"/""/g' data/2008_cand.csv
@@ -190,5 +158,8 @@ ids/legislators-historical.yaml:
 	mkdir -p ids
 	curl ${CURL_OPTS} -o $@ https://raw.githubusercontent.com/unitedstates/congress-legislators/master/legislators-historical.yaml
 
+dime-2012.csv: dime-2012.csv.xz CleanDime.hs
+	pv --progress --eta --rate dime-2012.csv.xz | xzcat > dime-2012.csv
+	make clean-dime
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
