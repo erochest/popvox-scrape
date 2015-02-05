@@ -1,0 +1,8 @@
+#!/bin/bash
+
+INPUT=dime-2012.csv
+OUTPUT=dime-sample.csv
+N=$1
+
+head -1 $INPUT > $OUTPUT
+slice $((N-50))-$((N+50)) < $INPUT >> $OUTPUT
