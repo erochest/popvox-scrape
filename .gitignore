@@ -5,3 +5,12 @@ cabal-dev
 *.chi
 *.chs.h
 .virthualenv
+*.xlsx
+*.zip
+*.csv
+*.json
+*.xz
+bills/
+ids/
+junkord/
+opensecrets.org/
