@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+
+"""\
+usage: difflines line_no file
+"""
+
+
+import csv
+import difflib
+import io
+import sys
+
+
+def main(argv=None):
+    line_no, filename = argv or sys.argv[1:]
+    line_no = int(line_no)
+
+    with open(filename) as f:
+        lines = list(f)
+
+    # prev, current = [l.split(',') for l in lines[line_no-2:line_no]]
+    prev_line, current_line = lines[line_no-2:line_no]
+    prev = list(csv.reader(io.StringIO(prev_line)))[0]
+    current = list(csv.reader(io.StringIO(current_line)))[0]
+
+    sm = difflib.SequenceMatcher(None, prev, current, False)
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        print('{:7}  a[{}:{}] --> b[{}:{}]\n\t{!r:>8}'.format(
+            tag, i1, i2, j1, j2, prev[i1:i2]))
+        if tag != 'equal':
+            print('\t{!r}'.format(current[j1:j2]))
+
+
+if __name__ == '__main__':
+    main()
