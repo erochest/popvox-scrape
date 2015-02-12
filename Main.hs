@@ -8,26 +8,30 @@ module Main where
 
 
 import           Control.Error
-import           Control.Lens              hiding (argument)
-import           Control.Monad             (forM_)
+import           Control.Lens               hiding (argument)
+import           Control.Monad              (forM_)
 import           Data.Aeson
 import           Data.Bifunctor
-import qualified Data.ByteString           as B
-import qualified Data.ByteString.Lazy      as LB
-import           Data.Csv                  hiding (Only, Parser)
-import qualified Data.HashMap.Strict       as M
+import qualified Data.ByteString            as B
+import qualified Data.ByteString.Char8      as C8
+import qualified Data.ByteString.Lazy       as LB
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Data.Csv                   hiding (Only, Parser)
+import           Data.Csv.Incremental       hiding (Parser, decodeByName)
+import qualified Data.Csv.Incremental       as Csv
+import qualified Data.HashMap.Strict        as M
 import           Data.Monoid
-import qualified Data.Text                 as T
-import           Data.Text.Format
-import qualified Data.Text.Format          as F
+import qualified Data.Text                  as T
+import           Data.Text.Format           hiding (print)
+import qualified Data.Text.Format           as F
 import           Data.Traversable
-import qualified Data.Vector               as V
+import qualified Data.Vector                as V
 import           Data.Version
 import           Filesystem
-import           Filesystem.Path.CurrentOS hiding (concat, decode)
+import           Filesystem.Path.CurrentOS  hiding (concat, decode)
 import           Options.Applicative
-import           Prelude                   hiding (FilePath, mapM)
-import           System.IO                 (hFlush, stdout)
+import           Prelude                    hiding (FilePath, mapM)
+import           System.IO                  (hFlush, stdout)
 
 import           Paths_popvox_scrape
 import           PopVox.Bills
@@ -98,11 +102,41 @@ popvox TestCsv{..} = do
     let fn = encodeString contribDataFile
     F.print "Reading {}... " $ Only fn
     hFlush stdout
-    s <- LB.readFile fn
-    let csv = snd <$> decodeByName s :: Either String (V.Vector OrgContrib)
-    case csv of
-        Right rows -> F.print "{} rows\n" . Only . V.length $ rows
-        Left e     -> F.print "ERROR: {}\n" . Only $ Shown e
+    s <- map (<> "\n") . L8.lines <$> L8.readFile fn
+    let header' = Csv.decodeByName :: HeaderParser (Csv.Parser OrgContrib)
+        (headerOut, dataLines) = parseHeader header' s
+    case headerOut of
+        FailH dataLine err -> do
+            F.print "HEADER ERROR: {}\n" $ Only err
+            C8.putStrLn dataLine
+        PartialH _ -> putStrLn "Oops! PartialH!"
+        DoneH header parser -> do
+            F.print "HEADER: {}\n" . Only $ Shown header
+            mapM_ print $ parseData parser dataLines
+
+    where
+        parseHeader f@(FailH _ _) xs    = (f, xs)
+        parseHeader (PartialH f) (x:xs) = parseHeader (f $ LB.toStrict x) xs
+        parseHeader (PartialH f) []     = parseHeader (f B.empty) []
+        parseHeader d@(DoneH _ _) xs    = (d, xs)
+
+        parseData p = go p 2
+
+        go (Fail _ err)  n _      =  [(n, err)]
+        go (Done outs)   n _      =  leftLines n outs
+        go (Many outs f) n []     =  leftLines n outs
+                                  ++ go (f B.empty) (n + length outs) []
+        go (Many outs f) n (x:xs) =
+            let rest = go (f $ LB.toStrict x) (n + length outs) xs
+            in  case leftLines n outs of
+                    [] -> rest
+                    xs  | failFast  -> xs
+                        | otherwise -> xs ++ rest
+
+        left (Left x)  = Just x
+        left (Right _) = Nothing
+
+        leftLines n = mapMaybe (sequenceA . fmap left) . zip [n..]
 
 popvox SearchPosition{..} = runScript $ do
     hits <-  fmap M.fromList . forM sessions $ \s ->
@@ -175,6 +209,8 @@ testCsv'
                    <> metavar "CONTRIB_DATA_FILE"
                    <> help "The directory containing the contribution\
                            \ data. Defaults to './data.csv'.")
+    <*> switch     (  short 'f' <> long "fail-fast"
+                   <> help "Short-circuit processing on the first error.")
 
 searchPosition' :: Parser PopVoxOptions
 searchPosition'

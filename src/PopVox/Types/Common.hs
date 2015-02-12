@@ -79,7 +79,9 @@ data PopVoxOptions
                 , rankBillOutput :: !FilePath
                 }
     | TestJson  { maplightAPIDir  :: !FilePath }
-    | TestCsv   { contribDataFile :: !FilePath }
+    | TestCsv   { contribDataFile :: !FilePath
+                , failFast        :: !Bool
+                }
     | SearchPosition { maplightAPIDir :: !FilePath
                      , maplightOrg    :: !T.Text
                      }

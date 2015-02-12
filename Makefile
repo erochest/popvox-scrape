@@ -21,13 +21,12 @@ test-json:
 	cabal run popvox-scrape -- test-json
 
 test-csv: dime-2012.csv
-	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv
+	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv --fail-fast
 
 test-sample:
 	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv
 
-clean-dime:
-	cabal run clean-dime
+clean-dime: dime-2012.csv
 
 data: contrib-data.csv govtrackdata junkord id-index
 
@@ -55,9 +54,11 @@ tags: Main.hs src/PopVox/Bills.hs src/PopVox/Fields.hs src/PopVox/Legislators.hs
 clean:
 	cabal clean
 	-rm -f tags
+	-rm -f dime-2012.csv.tmp
 
 cleandata:
 	-rm -rf data
+	-rm -rf dime-2012.csv dime-2012.csv.tmp
 	-rm -rf contrib-data.csv bill-ranks.csv
 
 distclean: clean cleandata
@@ -158,8 +159,12 @@ ids/legislators-historical.yaml:
 	mkdir -p ids
 	curl ${CURL_OPTS} -o $@ https://raw.githubusercontent.com/unitedstates/congress-legislators/master/legislators-historical.yaml
 
-dime-2012.csv: dime-2012.csv.xz CleanDime.hs
-	pv --progress --eta --rate dime-2012.csv.xz | xzcat > dime-2012.csv
-	make clean-dime
+dime-2012.csv.tmp: dime-2012.csv.xz
+	pv --progress --eta --rate dime-2012.csv.xz | xzcat > dime-2012.csv.tmp
+
+dime-2012.csv: dime-2012.csv.tmp CleanDime.hs
+	cabal build clean-dime
+	./dist/build/clean-dime/clean-dime < dime-2012.csv.tmp > dime-2012.csv
+	# rm dime-2012.csv.tmp
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint
