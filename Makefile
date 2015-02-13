@@ -1,5 +1,6 @@
 
 CURL_OPTS=--max-time 300
+SAMPLE_SIZE=250000
 
 all: run
 
@@ -35,8 +36,8 @@ clean-dime: dime-2012.csv
 
 data: contrib-data.csv govtrackdata junkord id-index
 
-sample:
-	./bin/sample 10000
+sample: dime-2012.csv.tmp
+	./bin/sample ${SAMPLE_SIZE}
 
 package: transform rank-bills
 	zip contrib-data-`timestamp`.zip contrib-data.csv bill-ranks.csv
