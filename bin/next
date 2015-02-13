@@ -43,12 +43,12 @@ def main():
     first_err = errs[0]
     print('ERROR IN FILE line {}. '
           'Sampling around that point.'.format(first_err))
-    subprocess.call(['./bin/sample', first_err])
+    subprocess.call(['./bin/issues', first_err])
 
-    sample_errs = make_test('test-sample')
-    first_err = sample_errs[0]
+    issue_errs = make_test('test-issues')
+    first_err = issue_errs[0]
     print('Diffing lines {} and {}.'.format(int(first_err)-1, first_err))
-    subprocess.call(['./bin/difflines', first_err, 'dime-sample.csv'])
+    subprocess.call(['./bin/difflines', first_err, 'dime-issues.csv'])
 
 
 if __name__ == '__main__':

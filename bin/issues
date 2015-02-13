@@ -1,7 +1,7 @@
 #!/bin/bash
 
 INPUT=dime-2012.csv
-OUTPUT=dime-sample.csv
+OUTPUT=dime-issues.csv
 N=$1
 
 head -1 $INPUT > $OUTPUT

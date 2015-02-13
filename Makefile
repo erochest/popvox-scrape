@@ -23,8 +23,8 @@ test-json:
 test-csv: dime-2012.csv
 	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv --fail-fast
 
-test-sample:
-	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv
+test-issues:
+	cabal run popvox-scrape -- test-csv --data-file=dime-issues.csv
 
 clean-dime: dime-2012.csv
 
