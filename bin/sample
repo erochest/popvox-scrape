@@ -1,0 +1,8 @@
+#!/bin/bash
+
+INPUT=dime-2012.csv
+OUTPUT=dime-sample.csv
+N=$1
+
+head -1 $INPUT > $OUTPUT
+cat $INPUT | slice 1- | random-sample $N >> $OUTPUT

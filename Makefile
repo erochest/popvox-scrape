@@ -23,12 +23,18 @@ test-json:
 test-csv: dime-2012.csv
 	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv --fail-fast
 
+test-sample:
+	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv
+
 test-issues:
 	cabal run popvox-scrape -- test-csv --data-file=dime-issues.csv
 
 clean-dime: dime-2012.csv
 
 data: contrib-data.csv govtrackdata junkord id-index
+
+sample:
+	./bin/sample 10000
 
 package: transform rank-bills
 	zip contrib-data-`timestamp`.zip contrib-data.csv bill-ranks.csv
@@ -167,4 +173,4 @@ dime-2012.csv: dime-2012.csv.tmp CleanDime.hs
 	pv --progress --eta --rate dime-2012.csv.tmp | ./dist/build/clean-dime/clean-dime > dime-2012.csv
 	# rm dime-2012.csv.tmp
 
-.PHONY: all init test run clean distclean configure deps build rebuild hlint
+.PHONY: all init test run clean distclean configure deps build rebuild hlint sample

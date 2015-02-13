@@ -36,7 +36,7 @@ def update_data(data_file):
 def main():
     update_data(DATA_FILE)
 
-    errs = make_test('test-csv')
+    errs = make_test('test-sample')
     if not errs:
         return
 
