@@ -32,7 +32,6 @@ cleanDime = T.unlines
           . catMaybes
           . snd
           . mapAccumL cleanLine Nothing
-          . zip [1::Int ..]
           . T.lines
 
 tags :: [T.Text]
@@ -72,13 +71,13 @@ isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
                  | "\"0\",\"COMM\""   `T.isInfixOf` line = True
                  | otherwise                             = False
 
-cleanLine :: Maybe T.Text -> (Int, T.Text) -> (Maybe T.Text, Maybe T.Text)
+cleanLine :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
 
-cleanLine _           (269809, line) = (Just line, Nothing)
-cleanLine (Just prev) (269810, line) = justPair $  clean33054178a prev
-                                                <> clean33054178b line
+cleanLine prev line
+    | "33054178" `isInd2012` line = (Just line, Nothing)
+    | "one\"\",\"\"none\"" `T.isPrefixOf` line
+        = justPair $ maybe "" clean33054178a prev <> clean33054178b line
 
-cleanLine _ (_, line)
     | "30233408" `isInd2012` line = justPair $ clean30233408 line
     | "30233412" `isInd2012` line = justPair $ clean30233412 line
     | "\"100\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipComm100 line
