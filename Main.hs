@@ -110,8 +110,7 @@ popvox TestCsv{..} = do
             F.print "HEADER ERROR: {}\n" $ Only err
             C8.putStrLn dataLine
         PartialH _ -> putStrLn "Oops! PartialH!"
-        DoneH header parser -> do
-            F.print "HEADER: {}\n" . Only $ Shown header
+        DoneH header parser ->
             mapM_ print $ parseData parser dataLines
 
     where
