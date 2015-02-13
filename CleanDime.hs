@@ -5,7 +5,9 @@
 module Main where
 
 
+import           Control.Applicative
 import qualified Data.ByteString.Lazy    as B
+import           Data.Foldable
 import qualified Data.List               as L
 import           Data.Maybe
 import           Data.Monoid
@@ -33,6 +35,43 @@ cleanDime = T.unlines
           . zip [1::Int ..]
           . T.lines
 
+tags :: [T.Text]
+tags = [ "NNE"
+       , "PAC"
+       , "CIT"
+       , "CRV"
+       , "NON"
+       , "OTH"
+       ]
+
+replaceTag :: T.Text -> T.Text -> Maybe T.Text
+replaceTag tag line
+    | long  `T.isInfixOf` line = Just $ T.replace long  "\",\"COMM\"" line
+    | short `T.isInfixOf` line = Just $ T.replace short "\",\"COMM\"" line
+    | otherwise                = Nothing
+    where
+        long  = tag <> "\",\"\",\"COMM\""
+        short = tag <> "\",\"COMM\""
+
+replaceTags :: T.Text -> Maybe T.Text
+replaceTags line = foldl' step empty tags
+    where
+        step accum tag = accum <|> replaceTag tag line
+
+invalidLine :: T.Text -> Maybe T.Text
+invalidLine line
+    | ("\"COMM\"" `T.isInfixOf` line) && not (isValidComm line)
+        = Just $ recipComm line
+    | otherwise = Nothing
+
+isValidComm :: T.Text -> Bool
+isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
+                 | "\"100\",\"COMM\"" `T.isInfixOf` line = True
+                 | "\"200\",\"COMM\"" `T.isInfixOf` line = True
+                 | "\"402\",\"COMM\"" `T.isInfixOf` line = True
+                 | "\"0\",\"COMM\""   `T.isInfixOf` line = True
+                 | otherwise                             = False
+
 cleanLine :: Maybe T.Text -> (Int, T.Text) -> (Maybe T.Text, Maybe T.Text)
 
 cleanLine _           (269809, line) = (Just line, Nothing)
@@ -42,34 +81,9 @@ cleanLine (Just prev) (269810, line) = justPair $  clean33054178a prev
 cleanLine _ (_, line)
     | "30233408" `isInd2012` line = justPair $ clean30233408 line
     | "30233412" `isInd2012` line = justPair $ clean30233412 line
-
     | "\"100\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipComm100 line
     | "\"UNK\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommUNK line
-    | "\"NNE\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommNNE line
-    | "\"NNE\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommNNE' line
-    | "\"PAC\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommPAC line
-    | "\"PAC\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommPAC' line
-    | "\"CIT\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommCIT line
-    | "\"CIT\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommCIT' line
-    | "\"CRV\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommCRV line
-    | "\"CRV\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommCRV' line
-    | "\"NON\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommNON line
-    | "\"NON\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommNON' line
-    | "\"OTH\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipCommOTH line
-    | "\"OTH\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommOTH' line
-
-    | ("\"COMM\"" `T.isInfixOf` line) && not (isValidComm line)
-        = justPair $ recipComm line
-
-cleanLine _ (_, line) = justPair line
-
-isValidComm :: T.Text -> Bool
-isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
-                 | "\"100\",\"COMM\"" `T.isInfixOf` line = True
-                 | "\"200\",\"COMM\"" `T.isInfixOf` line = True
-                 | "\"402\",\"COMM\"" `T.isInfixOf` line = True
-                 | "\"0\",\"COMM\""   `T.isInfixOf` line = True
-                 | otherwise                             = False
+    | otherwise = (Nothing, replaceTags line <|> invalidLine line <|> pure line)
 
 justPair :: T.Text -> (Maybe T.Text, Maybe T.Text)
 justPair = (Nothing,) . Just
@@ -107,42 +121,6 @@ recipComm100 = recipCommTag "100"
 
 recipCommUNK :: T.Text -> T.Text
 recipCommUNK = T.replace "\"UNK\",\"COMM\"" "\"\",\"COMM\""
-
-recipCommNNE :: T.Text -> T.Text
-recipCommNNE = recipCommTag "NNE"
-
-recipCommNNE' :: T.Text -> T.Text
-recipCommNNE' = recipCommTag' "NNE"
-
-recipCommPAC :: T.Text -> T.Text
-recipCommPAC = recipCommTag "PAC"
-
-recipCommPAC' :: T.Text -> T.Text
-recipCommPAC' = recipCommTag' "PAC"
-
-recipCommCIT :: T.Text -> T.Text
-recipCommCIT = recipCommTag "CIT"
-
-recipCommCIT' :: T.Text -> T.Text
-recipCommCIT' = recipCommTag' "CIT"
-
-recipCommCRV :: T.Text -> T.Text
-recipCommCRV = recipCommTag "CRV"
-
-recipCommCRV' :: T.Text -> T.Text
-recipCommCRV' = recipCommTag' "CRV"
-
-recipCommNON :: T.Text -> T.Text
-recipCommNON = recipCommTag "NON"
-
-recipCommNON' :: T.Text -> T.Text
-recipCommNON' = recipCommTag' "NON"
-
-recipCommOTH :: T.Text -> T.Text
-recipCommOTH = recipCommTag "OTH"
-
-recipCommOTH' :: T.Text -> T.Text
-recipCommOTH' = recipCommTag' "OTH"
 
 recipCommTag :: T.Text -> T.Text -> T.Text
 recipCommTag tag = T.replace (format "\"{}\",\"\",\"COMM\"" $ Only tag)
