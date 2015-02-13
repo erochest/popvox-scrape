@@ -5,4 +5,4 @@ OUTPUT=dime-sample.csv.tmp
 N=$1
 
 head -1 $INPUT > $OUTPUT
-cat $INPUT | slice 1- | random-sample $N >> $OUTPUT
+pv --progress --eta --rate $INPUT | slice 1- | random-sample $N >> $OUTPUT
