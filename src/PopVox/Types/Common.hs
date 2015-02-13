@@ -111,29 +111,34 @@ data Party
         = Dem
         | GOP
         | Independent
+        | Unknown
         deriving (Show, Eq, Enum, Bounded, Ord, Generic)
 
 instance Hashable Party
 
 instance ColumnHead Party where
-    columnValue   Dem             = "Dem"
-    columnValue   GOP             = "GOP"
-    columnValue   Independent     = "Ind"
+    columnValue   Dem         = "Dem"
+    columnValue   GOP         = "GOP"
+    columnValue   Independent = "Ind"
+    columnValue   Unknown     = "UNK"
 
-    columnBuilder Dem             = "Dem"
-    columnBuilder GOP             = "GOP"
-    columnBuilder Independent     = "Ind"
+    columnBuilder Dem         = "Dem"
+    columnBuilder GOP         = "GOP"
+    columnBuilder Independent = "Ind"
+    columnBuilder Unknown     = "UNK"
 
 instance FromField Party where
     parseField "100" = pure Dem
     parseField "200" = pure GOP
     parseField "328" = pure Independent
-    parseField p     = fail $ "Invalid Party: " ++ show p
+    -- This catch-all is probably a bad idea....
+    parseField _     = pure Unknown
 
 instance ToField Party where
     toField Dem         = "100"
     toField GOP         = "200"
     toField Independent = "328"
+    toField Unknown     = "UNK"
 
 instance ToJSON Party where
     toJSON = genericToJSON defaultOptions

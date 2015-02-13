@@ -31,6 +31,7 @@ library
                      , PopVox.Types.Orgs
                      , PopVox.Types.Output
                      , PopVox.Types.Position
+  ghc-options:         -Wall
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , bytestring
@@ -65,6 +66,7 @@ executable popvox-scrape
   main-is:             Main.hs
   other-modules:       Paths_popvox_scrape
                      , Opts
+  ghc-options:         -Wall
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , popvox-scrape
@@ -90,6 +92,7 @@ executable popvox-scrape
 
 executable clean-dime
   main-is:             CleanDime.hs
+  ghc-options:         -Wall
   other-modules:
   build-depends:       base >=4.7 && <4.8
                      , bytestring

@@ -57,12 +57,15 @@ instance ColumnHead ContribEntry where
 
 instance FromNamedRecord ContribEntry where
     parseNamedRecord m = do
-        rtype <- m CSV..: "recipient_type" :: Parser T.Text
+        rtype <- defaulting "CAND" <$> (m CSV..: "recipient_type" :: Parser T.Text)
         case rtype of
             "CAND" -> Candidate <$> m CSV..: "cycle"
                                 <*> m CSV..: "recipient_party"
             "COMM" -> Committee <$> m CSV..: "cycle"
             r      -> fail $ "Invalid recipient_type: " ++ T.unpack r
+        where
+            defaulting d v | T.null v  = d
+                           | otherwise = v
 
 instance ToNamedRecord ContribEntry where
     toNamedRecord (Candidate y p) =

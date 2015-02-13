@@ -24,7 +24,9 @@ test-csv: dime-2012.csv
 	cabal run popvox-scrape -- test-csv --data-file=dime-2012.csv --fail-fast
 
 test-sample:
-	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv
+	cabal build clean-dime
+	pv --progress --eta --rate dime-sample.csv.tmp | ./dist/build/clean-dime/clean-dime > dime-sample.csv
+	cabal run popvox-scrape -- test-csv --data-file=dime-sample.csv --fail-fast
 
 test-issues:
 	cabal run popvox-scrape -- test-csv --data-file=dime-issues.csv

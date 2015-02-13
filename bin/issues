@@ -1,8 +1,9 @@
 #!/bin/bash
 
-INPUT=dime-2012.csv
+INPUT=${2:-dime-2012.csv}
 OUTPUT=dime-issues.csv
 N=$1
 
+echo "Pulling lines from $INPUT around $N ..."
 head -1 $INPUT > $OUTPUT
 slice $((N-50))-$((N+50)) < $INPUT >> $OUTPUT

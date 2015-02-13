@@ -6,7 +6,8 @@ import re
 import subprocess
 
 
-DATA_FILE = 'dime-2012.csv'
+# DATA_FILE = 'dime-2012.csv'
+DATA_FILE = 'dime-sample.csv'
 
 
 def make_test(target):
@@ -34,7 +35,7 @@ def update_data(data_file):
 
 
 def main():
-    update_data(DATA_FILE)
+    # update_data(DATA_FILE)
 
     errs = make_test('test-sample')
     if not errs:
@@ -43,7 +44,7 @@ def main():
     first_err = errs[0]
     print('ERROR IN FILE line {}. '
           'Sampling around that point.'.format(first_err))
-    subprocess.call(['./bin/issues', first_err])
+    subprocess.call(['./bin/issues', first_err, 'dime-sample.csv'])
 
     issue_errs = make_test('test-issues')
     first_err = issue_errs[0]

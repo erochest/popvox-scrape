@@ -45,12 +45,16 @@ tags = [ "NNE"
 
 replaceTag :: T.Text -> T.Text -> Maybe T.Text
 replaceTag tag line
-    | long  `T.isInfixOf` line = Just $ T.replace long  "\",\"COMM\"" line
-    | short `T.isInfixOf` line = Just $ T.replace short "\",\"COMM\"" line
+    | long  `T.isInfixOf` line = Just $ T.replace long  repl line
+    | short `T.isInfixOf` line = Just $ T.replace short repl line
     | otherwise                = Nothing
     where
-        long  = tag <> "\",\"\",\"COMM\""
-        short = tag <> "\",\"COMM\""
+        -- long  = tag <> "\",\"\",\"COMM\""
+        -- short = tag <> "\",\"COMM\""
+        -- repl  = "\",\"COMM\""
+        long  = "\"" <> tag <> "\",\"\","
+        short = "\"" <> tag <> "\","
+        repl  = "\"\","
 
 replaceTags :: T.Text -> Maybe T.Text
 replaceTags line = foldl' step empty tags
@@ -74,6 +78,9 @@ isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
 cleanLine :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
 
 cleanLine prev line
+    -- I just can't make sense of these lines.
+    | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = (Nothing, Nothing)
+
     | "33054178" `isInd2012` line = (Just line, Nothing)
     | "one\"\",\"\"none\"" `T.isPrefixOf` line
         = justPair $ maybe "" clean33054178a prev <> clean33054178b line
