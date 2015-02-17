@@ -58,20 +58,19 @@ popvox Transform{..} = runScript $ do
             <$> mapM (billList maplightAPIDir
                         `withLog` "\tQuerying for session {}...\n"
                      ) sessions
-    scriptIO $ dumpBillIndex bIndex
-
-    scriptIO
-        . F.print "\nReading contributor data from {}...\n"
-        . Only $ encodeString contribDataFile
+    scriptIO $ do
+        dumpBillIndex bIndex
+        F.print "\nReading contributor data from {}...\n"
+            . Only $ encodeString contribDataFile
     ocIndex <- indexContribs' <$> readContribs contribDataFile
-    scriptIO $ dumpContribIndex ocIndex
+    scriptIO $ do
+        dumpContribIndex ocIndex
+        F.print "\nWriting data to {}...\n" $ Only outputFile
+        writeOrgData (makeHeaderRow ocIndex bIndex)
+                     outputFile
+                     (toData bIndex ocIndex)
 
-    scriptIO . F.print "\nWriting data to {}...\n" $ Only outputFile
-    scriptIO $ writeOrgData (makeHeaderRow ocIndex bIndex)
-                 outputFile
-                 (toData bIndex ocIndex)
-
-    scriptIO $ putStrLn "\ndone\n"
+        putStrLn "\ndone\n"
 
 popvox RankBills{..} = runScript $ do
     scriptIO $ putStrLn "rank-bills"
