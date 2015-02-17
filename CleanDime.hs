@@ -8,15 +8,12 @@ module Main where
 import           Control.Applicative
 import qualified Data.ByteString.Lazy    as B
 import           Data.Foldable
-import qualified Data.List               as L
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Text.Format
-import qualified Data.Text.Format        as F
 import           Data.Text.Format.Params
 import qualified Data.Text.Lazy          as T
 import           Data.Text.Lazy.Encoding
-import qualified Data.Text.Lazy.IO       as TIO
 import           Data.Traversable
 import           Prelude                 hiding (map)
 
@@ -49,9 +46,6 @@ replaceTag tag line
     | short `T.isInfixOf` line = Just $ T.replace short repl line
     | otherwise                = Nothing
     where
-        -- long  = tag <> "\",\"\",\"COMM\""
-        -- short = tag <> "\",\"COMM\""
-        -- repl  = "\",\"COMM\""
         long  = "\"" <> tag <> "\",\"\","
         short = "\"" <> tag <> "\","
         repl  = "\"\","
@@ -76,7 +70,6 @@ isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
                  | otherwise                             = False
 
 cleanLine :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
-
 cleanLine prev line
     -- I just can't make sense of these lines.
     | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = (Nothing, Nothing)
@@ -146,6 +139,7 @@ removeN :: Eq a => Int -> a -> [a] -> [a]
 removeN 0 _ xs = xs
 removeN n y (x:xs) | y == x    = removeN (n - 1) y xs
                    | otherwise = x : removeN n y xs
+removeN _ _ [] = []
 
 main :: IO ()
 main = B.interact (encodeUtf8 . cleanDime . decodeLatin1)

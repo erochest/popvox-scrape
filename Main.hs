@@ -106,11 +106,11 @@ popvox TestCsv{..} = do
     let header' = Csv.decodeByName :: HeaderParser (Csv.Parser OrgContrib)
         (headerOut, dataLines) = parseHeader header' s
     case headerOut of
-        FailH dataLine err -> do
-            F.print "HEADER ERROR: {}\n" $ Only err
+        FailH dataLine er -> do
+            F.print "HEADER ERROR: {}\n" $ Only er
             C8.putStrLn dataLine
         PartialH _ -> putStrLn "Oops! PartialH!"
-        DoneH header parser ->
+        DoneH _ parser ->
             mapM_ print $ parseData parser dataLines
 
     where
@@ -121,21 +121,21 @@ popvox TestCsv{..} = do
 
         parseData p = go p 2
 
-        go (Fail _ err)  n _      =  [(n, err)]
+        go (Fail _ er)   n _      =  [(n, er)]
         go (Done outs)   n _      =  leftLines n outs
         go (Many outs f) n []     =  leftLines n outs
                                   ++ go (f B.empty) (n + length outs) []
         go (Many outs f) n (x:xs) =
             let rest = go (f $ LB.toStrict x) (n + length outs) xs
             in  case leftLines n outs of
-                    [] -> rest
-                    xs  | failFast  -> xs
-                        | otherwise -> xs ++ rest
+                    []  -> rest
+                    xs' | failFast  -> xs'
+                        | otherwise -> xs' ++ rest
 
-        left (Left x)  = Just x
-        left (Right _) = Nothing
+        lft (Left x)  = Just x
+        lft (Right _) = Nothing
 
-        leftLines n = mapMaybe (sequenceA . fmap left) . zip [n..]
+        leftLines n = mapMaybe (sequenceA . fmap lft) . zip [n..]
 
 popvox SearchPosition{..} = runScript $ do
     hits <-  fmap M.fromList . forM sessions $ \s ->
