@@ -92,7 +92,7 @@ executable popvox-scrape
 
 executable clean-dime
   main-is:             CleanDime.hs
-  ghc-options:         -Wall
+  ghc-options:         -Wall -threaded -rtsopts "-with-rtsopts=-N"
   other-modules:
   build-depends:       base >=4.7 && <4.8
                      , bytestring

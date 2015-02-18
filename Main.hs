@@ -111,6 +111,7 @@ popvox TestCsv{..} = do
         PartialH _ -> putStrLn "Oops! PartialH!"
         DoneH _ parser ->
             mapM_ print $ parseData parser dataLines
+    putStrLn ""
 
     where
         parseHeader f@(FailH _ _) xs    = (f, xs)

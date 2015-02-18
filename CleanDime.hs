@@ -20,6 +20,14 @@ import           Prelude                 hiding (map)
 import           Debug.Trace
 
 
+-- To parallelize:
+-- * process the join-lines as part of a sequential first pass (although
+--   this may kill any gains I get from parallelizing it, but maybe all those
+--   `T.is*fixOf` will still cost a lot);
+-- * Remove the fold/accum part of the central processing;
+-- * Use https://hackage.haskell.org/package/parallel;
+-- * Chunk and parallelize.
+
 tracef :: Params ps => Format -> ps -> a -> a
 tracef f ps = trace (T.unpack $ format f ps)
 
