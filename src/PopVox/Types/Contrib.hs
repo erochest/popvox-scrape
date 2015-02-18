@@ -17,6 +17,7 @@ import           Data.Aeson.Types       (defaultOptions)
 import           Data.Csv               hiding ((.:))
 import qualified Data.Csv               as CSV
 import           Data.Hashable
+import qualified Data.HashSet           as S
 import           Data.Monoid
 import qualified Data.Text              as T
 import qualified Data.Text.Lazy.Builder as B
@@ -35,7 +36,11 @@ data ContribEntry
         , contribParty :: !Party
         }
         | Committee
-        { contribYear :: !Year
+        { contribYear  :: !Year
+        }
+        | StateLevel
+        { contribYear  :: !Year
+        , stateCode    :: !T.Text
         }
         deriving (Show, Eq, Ord, Generic)
 
@@ -48,12 +53,27 @@ last2 xs@[_, _] = xs
 last2 (_:xs)    = last2 xs
 
 instance ColumnHead ContribEntry where
-    columnBuilder (Candidate y p) = mconcat [ columnBuilder p
-                                            , B.fromString (last2 $ show y)
-                                            ]
-    columnBuilder (Committee y)   = mconcat [ ""
-                                            , B.fromString (last2 $ show y)
-                                            ]
+    columnBuilder (Candidate y p)   = mconcat [ columnBuilder p
+                                              , B.fromString (last2 $ show y)
+                                              ]
+    columnBuilder (Committee y)     = mconcat [ ""
+                                              , B.fromString (last2 $ show y)
+                                              ]
+    columnBuilder (StateLevel y st) = mconcat [ B.fromText st
+                                              , B.fromString (last2 $ show y)
+                                              ]
+
+stateCodes :: S.HashSet T.Text
+stateCodes = S.fromList [ "AL" , "AK" , "AZ" , "AR" , "CA" , "CO"
+                        , "CT" , "DE" , "DC" , "FL" , "GA" , "HI"
+                        , "ID" , "IL" , "IN" , "IA" , "KS" , "KY"
+                        , "LA" , "ME" , "MD" , "MA" , "MI" , "MN"
+                        , "MS" , "MO" , "MT" , "NE" , "NV" , "NH"
+                        , "NJ" , "NM" , "NY" , "NC" , "ND" , "OH"
+                        , "OK" , "OR" , "PA" , "RI" , "SC" , "SD"
+                        , "TN" , "TX" , "UT" , "VT" , "VA" , "WA"
+                        , "WV" , "WI" , "WY"
+                        ]
 
 instance FromNamedRecord ContribEntry where
     parseNamedRecord m = do
@@ -62,7 +82,9 @@ instance FromNamedRecord ContribEntry where
             "CAND" -> Candidate <$> m CSV..: "cycle"
                                 <*> m CSV..: "recipient_party"
             "COMM" -> Committee <$> m CSV..: "cycle"
-            r      -> fail $ "Invalid recipient_type: " ++ T.unpack r
+            r | r `S.member` stateCodes -> StateLevel <$> m CSV..: "cycle"
+                                                      <*> pure r
+              | otherwise -> fail $ "Invalid recipient_type: " ++ T.unpack r
         where
             defaulting d v | T.null v  = d
                            | otherwise = v
@@ -75,6 +97,10 @@ instance ToNamedRecord ContribEntry where
                                     ]
     toNamedRecord (Committee y) =
         namedRecord [ "recipient_type" CSV..= ("COMM" :: T.Text)
+                    , "cycle"          CSV..= toField y
+                    ]
+    toNamedRecord (StateLevel y st) =
+        namedRecord [ "recipient_type" CSV..= st
                     , "cycle"          CSV..= toField y
                     ]
 
