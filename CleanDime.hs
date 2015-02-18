@@ -69,10 +69,13 @@ isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
                  | "\"0\",\"COMM\""   `T.isInfixOf` line = True
                  | otherwise                             = False
 
+deleteLine :: (Maybe T.Text, Maybe T.Text)
+deleteLine = (Nothing, Nothing)
+
 cleanLine :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
 cleanLine prev line
     -- I just can't make sense of these lines.
-    | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = (Nothing, Nothing)
+    | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = deleteLine
 
     | "33054178" `isInd2012` line = (Just line, Nothing)
     | "one\"\",\"\"none\"" `T.isPrefixOf` line
