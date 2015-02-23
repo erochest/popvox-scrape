@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections     #-}
 
 
 module PopVox.Contribs
@@ -13,10 +13,11 @@ module PopVox.Contribs
     ) where
 
 
-import           Control.Applicative
+import           Conduit
 import           Control.Error
 import qualified Data.ByteString.Lazy      as LB
 import           Data.Csv                  hiding (encode, (.:))
+import           Data.Csv.Conduit
 import           Data.Foldable
 import qualified Data.HashMap.Strict       as M
 import qualified Data.List                 as L
@@ -51,7 +52,23 @@ indexContribs' = indexContribs
                . snd
 
 readIndexContribs :: FilePath -> Script OrgContribIndex
-readIndexContribs input = indexContribs . snd <$> readContribs input
+readIndexContribs fn =  runResourceT
+                     $  sourceFile fn
+                     $= fromNamedCsvLiftError toErr defaultDecodeOptions
+                     $= filterC keepContrib
+                     $$ foldMapC idx
+    where
+        keepContrib (OrgContrib _ (Candidate _ Dem) _) = True
+        keepContrib (OrgContrib _ (Candidate _ GOP) _) = True
+        keepContrib _                                  = False
+
+        idx (OrgContrib name entry amount) =
+            HashIndex . M.singleton name
+                      . HashIndex . M.singleton entry $ Sum amount
+
+        toErr (CsvParseError input er) =  "PARSE ERROR: " ++ er
+                                       ++ ": <<<" ++ show input ++ ">>>"
+        toErr (IncrementalError er)    =  "INCREMENTAL ERROR: " ++ er
 
 toData :: OrgBillIndex -> OrgContribIndex -> [OrgData]
 toData (HashIndex billIndex) (HashIndex contribIndex) =

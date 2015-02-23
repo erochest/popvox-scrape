@@ -62,7 +62,7 @@ popvox Transform{..} = runScript $ do
         dumpBillIndex bIndex
         F.print "\nReading contributor data from {}...\n"
             . Only $ encodeString contribDataFile
-    ocIndex <- indexContribs' <$> readContribs contribDataFile
+    ocIndex <- readIndexContribs contribDataFile
     scriptIO $ do
         dumpContribIndex ocIndex
         F.print "\nWriting data to {}...\n" $ Only outputFile
