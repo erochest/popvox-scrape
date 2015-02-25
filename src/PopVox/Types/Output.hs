@@ -74,6 +74,7 @@ data BillRankData = BillRankData
 instance ToNamedRecord BillRankData where
     toNamedRecord (BillRankData bill count score) =
         namedRecord [ "Bill"          CSV..= bill
+                    , "Congress"      CSV..= getSession (billSession bill)
                     , "Sponsor Count" CSV..= count
                     , "Score"         CSV..= score
                     ]

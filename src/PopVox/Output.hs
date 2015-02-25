@@ -65,4 +65,8 @@ getKeySet = S.fromList . M.keys
 
 writeBillRanks :: FilePath -> [BillRankData] -> IO ()
 writeBillRanks out = LB.writeFile (encodeString out)
-                   . encodeByName (V.fromList ["Bill", "Sponsor Count", "Score"])
+                   . encodeByName (V.fromList [ "Bill"
+                                              , "Congress"
+                                              , "Sponsor Count"
+                                              , "Score"
+                                              ])
