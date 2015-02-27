@@ -12,6 +12,7 @@ module PopVox.Ranks
     ) where
 
 
+import Data.Monoid
 import           Control.Applicative
 import           Control.Arrow
 import           Control.Error
@@ -108,18 +109,27 @@ parsePosition =
 indexPositionScores :: [PositionScore] -> PositionScoreIndex
 indexPositionScores = M.fromList . map ((psICPSR &&& psCongress) &&& id)
 
-assembleRanks :: PositionScoreIndex -> [BillSponsors ICPSR] -> [BillRankData]
+assembleRanks :: PositionScoreIndex -> [BillSponsors (LegislatorInfo ICPSR)]
+              -> [BillRankData]
 assembleRanks psIndex =
-    map (toData . (billSponsorInfo &&& getScore psIndex))
+    map (toData . (billSponsorInfo &&& getScore psIndex &&& getPartyCounts))
     where
-        toData (bill, (count, score)) = BillRankData bill count score
+        toData (bill, ((count, score), (d, r))) = BillRankData bill count d r score
 
+getPartyCounts :: BillSponsors (LegislatorInfo a) -> (Int, Int)
+getPartyCounts s = (getSum *** getSum) . foldMap (countParty . legParty)
+                 $ maybeToList (billSponsor s) ++ billCosponsors s
+    where
+        countParty Dem = (Sum 1, Sum 0)
+        countParty GOP = (Sum 0, Sum 1)
+        countParty _   = (Sum 0, Sum 0)
 
-getScore :: PositionScoreIndex -> BillSponsors ICPSR -> (Int, Score)
+getScore :: PositionScoreIndex -> BillSponsors (LegislatorInfo ICPSR)
+         -> (Int, Score)
 getScore psIndex bill@BillSponsors{billSponsorInfo} =
       mean
     . map psScore
-    . mapMaybe ((`M.lookup` psIndex) . (, billSession billSponsorInfo))
+    . mapMaybe ((`M.lookup` psIndex) . (, billSession billSponsorInfo) . legID)
     $ getAllSponsors bill
 
 getAllSponsors :: BillSponsors s -> [s]

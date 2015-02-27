@@ -28,6 +28,7 @@ module PopVox.Types.Common
     , Thomas(..)
     , ICPSR(..)
     , LegislatorIndex
+    , LegislatorInfo(..)
 
     , WithHeader(..)
     ) where
@@ -65,7 +66,7 @@ type State           = T.Text
 type StateCode       = Int
 type District        = Int
 type Score           = Double
-type LegislatorIndex = M.HashMap Thomas ICPSR
+type LegislatorIndex = M.HashMap Thomas (LegislatorInfo ICPSR)
 
 
 data PopVoxOptions
@@ -140,6 +141,12 @@ instance ToField Party where
     toField Independent = "328"
     toField Unknown     = "UNK"
 
+instance FromJSON Party where
+    parseJSON (String "Democrat")   = pure Dem
+    parseJSON (String "Republican") = pure GOP
+    parseJSON (String "Unknown")    = pure Unknown
+    parseJSON v                     = fail $ "Invalid party: " ++ show v
+
 instance ToJSON Party where
     toJSON = genericToJSON defaultOptions
 
@@ -178,6 +185,23 @@ newtype ICPSR = ICPSR { unICPSR :: Int }
                 deriving (Eq, Show, Generic)
 
 instance Hashable ICPSR
+
+instance FromJSON ICPSR where
+    parseJSON (Object o) = ICPSR <$> o .: "icpsr"
+    parseJSON v          = fail $ "Invalid legislator information: " ++ show v
+
+data LegislatorInfo a = LegInfo
+                      { legID    :: !a
+                      , legTerm  :: !Year
+                      , legParty :: !Party
+                      } deriving (Eq, Show, Generic)
+
+instance FromJSON a => FromJSON (LegislatorInfo a) where
+    parseJSON v@(Object o) =   LegInfo
+                           <$> parseJSON v
+                           <*> o .: "year"
+                           <*> o .: "party"
+    parseJSON v            = fail $ "Invalid legislator information: " ++ show v
 
 
 data Disposition = Support

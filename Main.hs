@@ -83,7 +83,7 @@ popvox RankBills{..} = runScript $ do
     lindex  <-  fmap M.unions
             .   mapM readLegislatorIndex
             =<< scriptIO (listDirectory rankBillIndex)
-    F.print "Read {} legislator IDs.\n" . Only $ M.size lindex
+    F.print "Read {} legislator IDs from '{}'.\n" (M.size lindex, rankBillIndex)
 
     bills   <-  map (resolveIDs lindex) <$> readBillDataDir rankBillBills
     F.print "Read {} bill sponsor information.\n" . Only $ length bills

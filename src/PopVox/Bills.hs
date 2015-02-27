@@ -34,7 +34,8 @@ readBillDataDir dataDir = EitherT . fmap sequenceA . runResourceT $
     =$ mapMC (liftIO . readBillData)
     $$ sinkList
 
-resolveIDs :: LegislatorIndex -> BillSponsors Thomas -> BillSponsors ICPSR
+resolveIDs :: LegislatorIndex -> BillSponsors Thomas
+           -> BillSponsors (LegislatorInfo ICPSR)
 resolveIDs index = joinm . fmap (`M.lookup` index)
     where
         joinm (BillSponsors b s ss) = BillSponsors b (join s) $ catMaybes ss

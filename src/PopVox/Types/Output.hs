@@ -68,13 +68,17 @@ indexIndex f = M.fromListWith mappend . map (first f) . M.toList
 data BillRankData = BillRankData
                   { billRankDataBill     :: !Bill
                   , billRankSponsorCount :: !Int
+                  , billRankDemSupport   :: !Int
+                  , billRankGOPSupport   :: !Int
                   , billRankDataPosition :: !Score
                   } deriving (Show, Eq, Generic)
 
 instance ToNamedRecord BillRankData where
-    toNamedRecord (BillRankData bill count score) =
+    toNamedRecord (BillRankData bill count dem gop score) =
         namedRecord [ "Bill"          CSV..= bill
                     , "Congress"      CSV..= getSession (billSession bill)
                     , "Sponsor Count" CSV..= count
+                    , "Dem Support"   CSV..= dem
+                    , "GOP Support"   CSV..= gop
                     , "Score"         CSV..= score
                     ]

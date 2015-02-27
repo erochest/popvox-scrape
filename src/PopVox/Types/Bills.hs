@@ -26,8 +26,7 @@ import           Data.Csv                   hiding ((.:))
 import           Data.Hashable
 import           Data.Monoid
 import           Data.Text.Encoding         (encodeUtf8)
-import qualified Data.Text.Lazy.Builder     as B
-import           Data.Text.Lazy.Builder.Int
+import qualified Data.Text.Format           as F
 import           GHC.Generics
 
 import           PopVox.Types.Common
@@ -122,12 +121,8 @@ instance FromJSON Bill where
     parseJSON b          = fail $ "Invalid Bill: " ++ show b
 
 instance ColumnHead Bill where
-    columnBuilder (Bill n ch cong) = mconcat [ columnBuilder ch
-                                             , decimal n
-                                             , " ("
-                                             , decimal cong
-                                             , B.singleton ')'
-                                             ]
+    columnBuilder (Bill n ch cong) =
+        columnBuilder ch <> F.build "{} ({})" (getBillNo n, cong)
 
 instance ToField Bill where
     toField = encodeUtf8 . columnValue

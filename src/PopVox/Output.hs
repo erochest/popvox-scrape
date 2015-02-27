@@ -68,5 +68,7 @@ writeBillRanks out = LB.writeFile (encodeString out)
                    . encodeByName (V.fromList [ "Bill"
                                               , "Congress"
                                               , "Sponsor Count"
+                                              , "Dem Support"
+                                              , "GOP Support"
                                               , "Score"
                                               ])
