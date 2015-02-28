@@ -18,7 +18,6 @@ import           Data.Foldable
 import qualified Data.HashMap.Strict       as M
 import qualified Data.Text                 as T
 import qualified Data.Text.Read            as TR
-import qualified Data.Vector               as V
 import           Data.Yaml
 import           Filesystem.Path.CurrentOS hiding (concat)
 import           Prelude                   hiding (FilePath, concatMap)

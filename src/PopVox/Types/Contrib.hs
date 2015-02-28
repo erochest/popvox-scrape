@@ -4,7 +4,8 @@
 
 
 module PopVox.Types.Contrib
-    ( Contrib
+    ( Amount
+    , ContribInfo
     , ContribEntry(..)
     , ContribIndex
     , ContribIndex'
@@ -26,9 +27,11 @@ import           GHC.Generics
 import           PopVox.Types.Common
 
 
-type Contrib       = Double
-type ContribIndex  = HashIndex ContribEntry (Sum Contrib)
-type ContribIndex' = HashIndex ContribEntry Contrib
+type Amount        = Double
+type ContribInfo   = (First T.Text, Sum Amount)
+type ContribInfo'  = (Maybe T.Text, Amount)
+type ContribIndex  = HashIndex ContribEntry ContribInfo
+type ContribIndex' = HashIndex ContribEntry ContribInfo'
 
 data ContribEntry
         = Candidate

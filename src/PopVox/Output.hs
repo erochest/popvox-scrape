@@ -27,7 +27,7 @@ import           PopVox.Types
 
 makeHeaderRow :: OrgContribIndex -> OrgBillIndex -> Header
 makeHeaderRow cindex bindex =
-    V.fromList . map LB.toStrict $ L.concat [ ["Organization"]
+    V.fromList . map LB.toStrict $ L.concat [ ["Organization", "District 10s"]
                                             , sortHeaders (contribHeaders cindex)
                                             , sortHeaders (billHeaders bindex)
                                             , sortHeaders (totalHeaders cindex)

@@ -14,11 +14,14 @@ import qualified Data.ByteString       as BS
 import qualified Data.ByteString.Char8 as C8
 import           Data.Csv              hiding ((.:))
 import qualified Data.Csv              as CSV
+import           Data.Foldable
 import           Data.Hashable
 import qualified Data.HashMap.Strict   as M
 import           Data.Monoid
+import qualified Data.Text             as T
 import           Data.Text.Encoding    (encodeUtf8)
 import           GHC.Generics
+import           Prelude               hiding (concat)
 
 import           PopVox.Types.Bills
 import           PopVox.Types.Common
@@ -35,22 +38,27 @@ data OrgData = Org
 
 instance ToNamedRecord OrgData where
     toNamedRecord (Org n conts bills) =
-        namedRecord $ concat [ ["Organization" CSV..= n]
-                             , contribsRecord $ fmap getSum conts
+        namedRecord $ concat [ [ "Organization" CSV..= n
+                               , "District 10s" CSV..= getDistrict conts
+                               ]
+                             , contribsRecord $ fmap (getFirst `bimap` getSum) conts
                              , billsRecord bills
                              , totalsRecord conts
                              ]
 
 
+getDistrict :: ContribIndex -> Maybe T.Text
+getDistrict = getFirst . foldMap fst . M.elems . unIndex
+
 contribsRecord :: ContribIndex' -> [(BS.ByteString, BS.ByteString)]
-contribsRecord = map (columnbs `bimap` showbs) . M.toList . unIndex
+contribsRecord = map (columnbs `bimap` (showbs . snd)) . M.toList . unIndex
 
 billsRecord :: BillIndex -> [(BS.ByteString, BS.ByteString)]
 billsRecord = map (columnbs `bimap` (showbs . fromEnum)) . M.toList . unIndex
 
 totalsRecord :: ContribIndex -> [(BS.ByteString, BS.ByteString)]
 totalsRecord = M.toList
-             . fmap (showbs . getSum)
+             . fmap (showbs . getSum . snd)
              . indexIndex (columnbs . contribParty)
              . unIndex
 

@@ -21,6 +21,7 @@ import qualified Data.Aeson           as A
 import           Data.Csv             hiding ((.:))
 import qualified Data.Csv             as CSV
 import           Data.Monoid
+import qualified Data.Text            as T
 import           GHC.Generics
 
 import           PopVox.Types.Common
@@ -32,20 +33,23 @@ type OrgContribIndex' = HashIndex OrgName ContribIndex'
 
 data OrgContrib = OrgContrib
                 { orgContribName   :: !OrgName
+                , orgDistrict10s   :: !T.Text
                 , orgContribEntry  :: !ContribEntry
-                , orgContribAmount :: !Contrib
+                , orgContribAmount :: !Amount
                 } deriving (Show, Eq)
 
 instance FromNamedRecord OrgContrib where
     parseNamedRecord m =   OrgContrib
                        <$> m CSV..: "contributor_name"
+                       <*> m CSV..: "contributor_district_10s"
                        <*> parseNamedRecord m
                        <*> m CSV..: "amount"
 
 instance ToNamedRecord OrgContrib where
-    toNamedRecord (OrgContrib n c a) =
-        namedRecord [ "contributor_name" CSV..= toField n
-                    , "amount"           CSV..= toField a
+    toNamedRecord (OrgContrib n d c a) =
+        namedRecord [ "contributor_name"         CSV..= toField n
+                    , "contributor_district_10s" CSV..= toField d
+                    , "amount"                   CSV..= toField a
                     ]
         <> toNamedRecord c
 
