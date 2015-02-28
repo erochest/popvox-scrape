@@ -6,38 +6,38 @@ module Main where
 
 
 import           Control.Applicative
-import qualified Data.ByteString.Lazy    as B
+import           Control.Parallel.Strategies
+import qualified Data.ByteString.Lazy        as B
 import           Data.Foldable
+import           Data.List.Split             (chunksOf)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Text.Format
 import           Data.Text.Format.Params
-import qualified Data.Text.Lazy          as T
+import qualified Data.Text.Lazy              as T
 import           Data.Text.Lazy.Encoding
 import           Data.Traversable
-import           Prelude                 hiding (map)
+import           Prelude                     hiding (concat, map)
 
 import           Debug.Trace
 
 
--- To parallelize:
--- * process the join-lines as part of a sequential first pass (although
---   this may kill any gains I get from parallelizing it, but maybe all those
---   `T.is*fixOf` will still cost a lot);
--- * Remove the fold/accum part of the central processing;
--- * Use https://hackage.haskell.org/package/parallel;
--- * Chunk and parallelize.
+chunkSize :: Int
+chunkSize = 4096
 
 tracef :: Params ps => Format -> ps -> a -> a
 tracef f ps = trace (T.unpack $ format f ps)
 
 
-cleanDime :: T.Text -> T.Text
-cleanDime = T.unlines
+-- TODO: Use strict Text for cleanLine.
+
+cleanDime :: [T.Text] -> [T.Text]
+cleanDime = concat
+          . parMap rdeepseq (mapMaybe cleanLine)
+          . chunksOf chunkSize
           . catMaybes
           . snd
-          . mapAccumL cleanLine Nothing
-          . T.lines
+          . mapAccumL joinLines Nothing
 
 tags :: [T.Text]
 tags = [ "NNE"
@@ -77,23 +77,23 @@ isValidComm line | "\"\",\"COMM\""    `T.isInfixOf` line = True
                  | "\"0\",\"COMM\""   `T.isInfixOf` line = True
                  | otherwise                             = False
 
-deleteLine :: (Maybe T.Text, Maybe T.Text)
-deleteLine = (Nothing, Nothing)
-
-cleanLine :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
-cleanLine prev line
-    -- I just can't make sense of these lines.
-    | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = deleteLine
-
+joinLines :: Maybe T.Text -> T.Text -> (Maybe T.Text, Maybe T.Text)
+joinLines prev line
     | "33054178" `isInd2012` line = (Just line, Nothing)
     | "one\"\",\"\"none\"" `T.isPrefixOf` line
         = justPair $ maybe "" clean33054178a prev <> clean33054178b line
+    | otherwise = (prev, Just line)
 
-    | "30233408" `isInd2012` line = justPair $ clean30233408 line
-    | "30233412" `isInd2012` line = justPair $ clean30233412 line
-    | "\"100\",\"\",\"COMM\"" `T.isInfixOf` line = justPair $ recipComm100 line
-    | "\"UNK\",\"COMM\""      `T.isInfixOf` line = justPair $ recipCommUNK line
-    | otherwise = (Nothing, replaceTags line <|> invalidLine line <|> pure line)
+cleanLine :: T.Text -> Maybe T.Text
+cleanLine line
+    -- I just can't make sense of these lines.
+    | "48d749ff199f19b3f8a9487d9648e33b" `T.isInfixOf` line = Nothing
+
+    | "30233408" `isInd2012` line = Just $ clean30233408 line
+    | "30233412" `isInd2012` line = Just $ clean30233412 line
+    | "\"100\",\"\",\"COMM\"" `T.isInfixOf` line = Just $ recipComm100 line
+    | "\"UNK\",\"COMM\""      `T.isInfixOf` line = Just $ recipCommUNK line
+    | otherwise = replaceTags line <|> invalidLine line <|> pure line
 
 justPair :: T.Text -> (Maybe T.Text, Maybe T.Text)
 justPair = (Nothing,) . Just
@@ -153,4 +153,4 @@ removeN n y (x:xs) | y == x    = removeN (n - 1) y xs
 removeN _ _ [] = []
 
 main :: IO ()
-main = B.interact (encodeUtf8 . cleanDime . decodeLatin1)
+main = B.interact (encodeUtf8 . T.unlines . cleanDime . T.lines . decodeLatin1)

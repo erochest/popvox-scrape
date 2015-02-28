@@ -97,6 +97,8 @@ executable clean-dime
   other-modules:
   build-depends:       base >=4.7 && <4.8
                      , bytestring
+                     , parallel
+                     , split
                      , text
                      , text-format
   default-language:    Haskell2010
