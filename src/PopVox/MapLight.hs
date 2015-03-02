@@ -19,6 +19,7 @@ import qualified Data.ByteString.Lazy      as LB
 import           Data.Foldable
 import qualified Data.HashMap.Strict       as M
 import qualified Data.List                 as L
+import           Data.Text                 (toLower)
 import           Filesystem.Path.CurrentOS hiding (encode)
 import           Prelude                   hiding (FilePath)
 
@@ -49,7 +50,7 @@ indexBills = foldMap go
 
         go' :: Bill -> OrgInfo -> OrgBillIndex
         go' bill (OrgInfo _ org d) =
-            singleHI org $ singleHI bill d
+            singleHI (toLower org) $ singleHI bill d
 
         singleHI k v = HashIndex $ M.singleton k v
 
