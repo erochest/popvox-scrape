@@ -16,7 +16,13 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox.Bills
+  exposed-modules:     PopVox.Action.Transform
+                     , PopVox.Action.RankBills
+                     , PopVox.Action.ReportOn
+                     , PopVox.Action.SearchPosition
+                     , PopVox.Action.TestCsv
+                     , PopVox.Action.TestJson
+                     , PopVox.Bills
                      , PopVox.Contribs
                      , PopVox.Fields
                      , PopVox.Legislators

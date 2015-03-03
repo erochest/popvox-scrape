@@ -7,7 +7,9 @@
 
 
 module PopVox.Types.Common
-    ( Header
+    ( sessions
+
+    , Header
     , HeaderSet
 
     , OrgID
@@ -57,6 +59,9 @@ import           Prelude                   hiding (FilePath, concat)
 
 import           PopVox.Utils
 
+
+sessions :: [Session]
+sessions = [109, 110, 111, 112, 113]
 
 type HeaderSet       = S.HashSet ByteString
 type OrgID           = T.Text
