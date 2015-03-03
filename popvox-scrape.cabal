@@ -16,7 +16,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PopVox.Action.Transform
+  exposed-modules:     PopVox.Action.ExtractCF
+                     , PopVox.Action.Transform
                      , PopVox.Action.RankBills
                      , PopVox.Action.ReportOn
                      , PopVox.Action.SearchPosition

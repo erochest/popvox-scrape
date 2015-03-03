@@ -12,6 +12,7 @@ import           Options.Applicative
 import           Prelude                    hiding (FilePath, mapM)
 
 import           Opts
+import           PopVox.Action.ExtractCF
 import           PopVox.Action.Transform
 import           PopVox.Action.RankBills
 import           PopVox.Action.ReportOn
@@ -29,6 +30,7 @@ popvox Transform{..} =
     runScript $ transform contribDataFile maplightAPIDir outputFile
 popvox RankBills{..} =
     runScript $ rankBills rankBillScores rankBillBills rankBillIndex rankBillOutput
+popvox ExtractCF{..} = runScript $ extractCF contribDataFile cfOutputFile
 popvox TestJson{..}       = testJSON maplightAPIDir
 popvox TestCsv{..}        = testCSV contribDataFile failFast
 popvox SearchPosition{..} = runScript $ searchPosition maplightAPIDir maplightOrg

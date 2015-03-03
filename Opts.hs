@@ -49,6 +49,16 @@ rankBills'
     <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
                    <> help "The file to write the output to.")
 
+extractCF' :: Parser PopVoxOptions
+extractCF'
+    =   ExtractCF
+    <$> fileOption (  short 'd' <> long "data-file" <> value "./data.csv"
+                   <> metavar "CONTRIB_DATA_FILE"
+                   <> help "The file containing the contribution\
+                           \ data. Defaults to './data.csv'.")
+    <*> fileOption (  short 'o' <> long "output" <> metavar "CSV_OUTPUT"
+                   <> help "The file to write the output to.")
+
 testJson' :: Parser PopVoxOptions
 testJson'
     =   TestJson
@@ -98,6 +108,9 @@ opts' = subparser
       <> command "rank-bills"
          (info (helper <*> rankBills')
             (progDesc "Determine the bias of each bill from the sponsor's scores."))
+      <> command "extract-cf"
+         (info (helper <*> extractCF')
+            (progDesc "Extract the CF scores from the contributor data file."))
       <> command "test-json"
          (info (helper <*> testJson')
             (progDesc "Read the JSON API files and test that we can parse them."))

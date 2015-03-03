@@ -19,6 +19,8 @@ module PopVox.Types.Common
     , StateCode
     , District
     , Score
+    , CFScore
+    , WorkingMean
 
     , PopVoxOptions(..)
     , ColumnHead(..)
@@ -71,7 +73,10 @@ type State           = T.Text
 type StateCode       = Int
 type District        = Int
 type Score           = Double
+type CFScore         = Double
 type LegislatorIndex = M.HashMap Thomas (LegislatorInfo ICPSR)
+
+type WorkingMean a = (Sum a, Sum a)
 
 
 data PopVoxOptions
@@ -83,6 +88,9 @@ data PopVoxOptions
                 , rankBillBills  :: !FilePath
                 , rankBillIndex  :: !FilePath
                 , rankBillOutput :: !FilePath
+                }
+    | ExtractCF { contribDataFile :: !FilePath
+                , cfOutputFile    :: !FilePath
                 }
     | TestJson  { maplightAPIDir  :: !FilePath }
     | TestCsv   { contribDataFile :: !FilePath

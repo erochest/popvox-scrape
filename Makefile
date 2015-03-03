@@ -88,6 +88,9 @@ rebuild: clean configure build
 contrib-data.csv: dime-2012.csv
 	cabal run popvox-scrape -- transform --data-file $< --output $@
 
+cf-scores.csv: dime-2012.csv
+	cabal run popvox-scrape -- extract-cf --data-file $< --output $@
+
 bill-ranks.csv: govtrackdata junkord id-index
 	cabal run -- rank-bills --score-dir=junkord --bill-dir=bills --legislator-index=ids --output=$@
 
