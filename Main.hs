@@ -8,7 +8,7 @@ module Main where
 
 
 import           Control.Error
-import           Control.Lens               hiding (argument)
+import           Control.Lens               hiding (argument, transform)
 import           Control.Monad              (forM_)
 import           Data.Aeson
 import           Data.Bifunctor
@@ -51,8 +51,8 @@ sessions = [109, 110, 111, 112, 113]
 main :: IO ()
 main = execParser opts >>= popvox
 
-popvox :: PopVoxOptions -> IO ()
-popvox Transform{..} = runScript $ do
+transform :: FilePath -> FilePath -> FilePath -> Script ()
+transform contribDataFile maplightAPIDir outputFile = do
     scriptIO $ putStrLn "\nQuerying maplight.org...\n"
     bIndex  <-  indexBills . concat
             <$> mapM (billList maplightAPIDir
@@ -72,7 +72,8 @@ popvox Transform{..} = runScript $ do
 
         putStrLn "\ndone\n"
 
-popvox RankBills{..} = runScript $ do
+rankBills :: FilePath -> FilePath -> FilePath -> FilePath -> Script ()
+rankBills rankBillScores rankBillBills rankBillIndex rankBillOutput = do
     scriptIO $ putStrLn "rank-bills"
 
     pscores <-  fmap (indexPositionScores . concat)
@@ -90,14 +91,16 @@ popvox RankBills{..} = runScript $ do
 
     scriptIO . writeBillRanks rankBillOutput $ assembleRanks pscores bills
 
-popvox TestJson{..} = forM_ sessions $ \s -> do
+testJSON :: FilePath -> IO ()
+testJSON maplightAPIDir = forM_ sessions $ \s -> do
     F.print "\nQuerying for session {}... " $ Only s
     out <- runEitherT $ billList maplightAPIDir s
     case out of
         Right _ -> putStrLn "ok"
         Left e  -> F.print "ERROR: {}\n" $ Only e
 
-popvox TestCsv{..} = do
+testCSV :: FilePath -> Bool -> IO ()
+testCSV contribDataFile failFast = do
     let fn = encodeString contribDataFile
     F.print "Reading {}... " $ Only fn
     hFlush stdout
@@ -137,7 +140,8 @@ popvox TestCsv{..} = do
 
         leftLines n = mapMaybe (sequenceA . fmap lft) . zip [n..]
 
-popvox SearchPosition{..} = runScript $ do
+searchPosition :: FilePath -> T.Text -> Script ()
+searchPosition maplightAPIDir maplightOrg = do
     hits <-  fmap M.fromList . forM sessions $ \s ->
              (("session" <>) . T.pack . show $ getSession s,) . filter isHit
          <$> billList maplightAPIDir s
@@ -147,7 +151,8 @@ popvox SearchPosition{..} = runScript $ do
         isHit = any (maplightOrg `T.isInfixOf`) . getOrg
         getOrg bi = bi ^.. billInfoOrgs . traverse . orgInfoName
 
-popvox ReportOn{..} = runScript $
+reportOn :: FilePath -> T.Text -> Script ()
+reportOn reportCsvFile reportTarget =
         (EitherT . fmap decodeByName . LB.readFile . encodeString) reportCsvFile
     >>= V.mapM_ dumpOrg . V.filter isHit . snd
     where
@@ -159,6 +164,15 @@ popvox ReportOn{..} = runScript $
                 $ M.toList org
             putStrLn ""
 
+popvox :: PopVoxOptions -> IO ()
+popvox Transform{..} =
+    runScript $ transform contribDataFile maplightAPIDir outputFile
+popvox RankBills{..} =
+    runScript $ rankBills rankBillScores rankBillBills rankBillIndex rankBillOutput
+popvox TestJson{..}       = testJSON maplightAPIDir
+popvox TestCsv{..}        = testCSV contribDataFile failFast
+popvox SearchPosition{..} = runScript $ searchPosition maplightAPIDir maplightOrg
+popvox ReportOn{..}       = runScript $ reportOn reportCsvFile reportTarget
 
 transform' :: Parser PopVoxOptions
 transform'
