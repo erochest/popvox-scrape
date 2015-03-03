@@ -135,16 +135,14 @@ recipCommUNK :: T.Text -> T.Text
 recipCommUNK = T.replace "\"UNK\",\"COMM\"" "\"\",\"COMM\""
 
 recipCommTag :: T.Text -> T.Text -> T.Text
-recipCommTag tag = TL.toStrict
-                 . TL.replace (format "\"{}\",\"\",\"COMM\"" $ Only tag)
+recipCommTag tag = T.replace ( TL.toStrict . format "\"{}\",\"\",\"COMM\""
+                             $ Only tag
+                             )
                               "\"\",\"COMM\""
-                 . TL.fromStrict
 
 recipCommTag' :: T.Text -> T.Text -> T.Text
-recipCommTag' tag = TL.toStrict
-                  . TL.replace (format "\"{}\",\"COMM\"" $ Only tag)
+recipCommTag' tag = T.replace (TL.toStrict . format "\"{}\",\"COMM\"" $ Only tag)
                                "\"\",\"COMM\""
-                  . TL.fromStrict
 
 federa :: TL.Text -> TL.Text
 federa = TL.replace "\"federa\",\"\"" "\"federa\""
