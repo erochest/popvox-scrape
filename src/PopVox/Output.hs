@@ -70,5 +70,6 @@ writeBillRanks out = LB.writeFile (encodeString out)
                                               , "Sponsor Count"
                                               , "Dem Support"
                                               , "GOP Support"
+                                              -- , "Mean Sponsor CF Score"
                                               , "Score"
                                               ])
