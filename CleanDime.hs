@@ -9,7 +9,6 @@ import           Control.Applicative
 import           Control.Parallel.Strategies
 import qualified Data.ByteString.Lazy        as B
 import           Data.Foldable
-import           Data.List.Split             (chunksOf)
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text                   as T
@@ -31,12 +30,8 @@ tracef f ps = trace (TL.unpack $ format f ps)
 
 
 cleanDime :: [TL.Text] -> [TL.Text]
-cleanDime = concat
-          . parMap rdeepseq (fmap TL.fromStrict . mapMaybe (cleanLine . TL.toStrict))
-          . chunksOf chunkSize
-          . catMaybes
-          . snd
-          . mapAccumL joinLines Nothing
+cleanDime = withStrategy (parBuffer 4096 rdeepseq)
+          . mapMaybe (fmap TL.fromStrict . cleanLine . TL.toStrict)
 
 tags :: [T.Text]
 tags = [ "NNE"
@@ -160,4 +155,12 @@ removeN n y (x:xs) | y == x    = removeN (n - 1) y xs
 removeN _ _ [] = []
 
 main :: IO ()
-main = B.interact (encodeUtf8 . TL.unlines . cleanDime . TL.lines . decodeLatin1)
+main = B.interact ( encodeUtf8
+                  . TL.unlines
+                  . cleanDime
+                  . catMaybes
+                  . snd
+                  . mapAccumL joinLines Nothing
+                  . TL.lines
+                  . decodeLatin1
+                  )
