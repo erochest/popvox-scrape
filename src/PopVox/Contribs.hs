@@ -64,7 +64,7 @@ readIndexContribs fn =  runResourceT
     where
         keepContrib (OrgContrib _ _ (Candidate _ Dem) _) = True
         keepContrib (OrgContrib _ _ (Candidate _ GOP) _) = True
-        keepContrib _                                  = False
+        keepContrib _                                    = False
 
         idx (OrgContrib name district entry amount) =
             HashIndex . M.singleton name

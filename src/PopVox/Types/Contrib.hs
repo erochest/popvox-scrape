@@ -28,8 +28,9 @@ import           PopVox.Types.Common
 
 
 type Amount        = Double
-type ContribInfo   = (First T.Text, Sum Amount)
-type ContribInfo'  = (Maybe T.Text, Amount)
+type DistrictName  = T.Text
+type ContribInfo   = (First DistrictName, Sum Amount)
+type ContribInfo'  = (Maybe DistrictName, Amount)
 type ContribIndex  = HashIndex ContribEntry ContribInfo
 type ContribIndex' = HashIndex ContribEntry ContribInfo'
 
