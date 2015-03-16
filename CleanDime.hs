@@ -30,7 +30,7 @@ tracef f ps = trace (TL.unpack $ format f ps)
 
 
 cleanDime :: [TL.Text] -> [TL.Text]
-cleanDime = withStrategy (parBuffer 4096 rdeepseq)
+cleanDime = withStrategy (parListChunk 500 rdeepseq)
           . mapMaybe (fmap TL.fromStrict . cleanLine . TL.toStrict)
 
 tags :: [T.Text]
