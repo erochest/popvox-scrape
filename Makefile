@@ -176,7 +176,7 @@ dime-2012.csv.tmp: dime-2012.csv.xz
 
 dime-2012.csv: dime-2012.csv.tmp CleanDime.hs
 	cabal build clean-dime
-	pv --progress --eta --rate dime-2012.csv.tmp | ./dist/build/clean-dime/clean-dime > dime-2012.csv
+	pv --progress --eta --rate dime-2012.csv.tmp | ./dist/build/clean-dime/clean-dime +RTS -s > dime-2012.csv
 	# rm dime-2012.csv.tmp
 
 .PHONY: all init test run clean distclean configure deps build rebuild hlint sample
