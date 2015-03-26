@@ -7,7 +7,7 @@ all: run
 init:
 	cabal sandbox init
 	make deps
-	data
+	make data
 
 test: test-json test-csv
 
@@ -135,7 +135,7 @@ bills/110/bills:
 
 bills/111/bills:
 	mkdir -p bills/111
-	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/109/bills bills/111
+	rsync -avz --delete --delete-excluded --exclude **/text-versions/ govtrack.us::govtrackdata/congress/111/bills bills/111
 
 bills/112/bills:
 	mkdir -p bills/112
