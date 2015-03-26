@@ -25,7 +25,6 @@ import qualified Data.HashSet              as S
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text                 as T
-import           Data.Traversable
 import           Data.Tuple                (swap)
 import           Data.Yaml                 hiding ((.:), (.=))
 import           Filesystem.Path.CurrentOS
