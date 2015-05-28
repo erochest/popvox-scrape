@@ -40,7 +40,7 @@ library
                      , PopVox.Types.Position
   ghc-options:         -Wall
   -- other-extensions:    
-  build-depends:       base >=4.7 && <4.8
+  build-depends:       base >=4.7 && <5
                      , bytestring
                      , text
                      , text-format
@@ -76,7 +76,7 @@ executable popvox-scrape
                      , Opts
   ghc-options:         -Wall
   -- other-extensions:    
-  build-depends:       base >=4.7 && <4.8
+  build-depends:       base >=4.7 && <5
                      , popvox-scrape
                      , bytestring
                      , text
@@ -102,7 +102,7 @@ executable clean-dime
   main-is:             CleanDime.hs
   ghc-options:         -Wall -threaded -rtsopts "-with-rtsopts=-N"
   other-modules:
-  build-depends:       base >=4.7 && <4.8
+  build-depends:       base >=4.7 && <5
                      , bytestring
                      , parallel
                      , split
@@ -115,7 +115,7 @@ test-suite popvox-scrape-specs
   ghc-options:         -threaded -rtsopts
   hs-source-dirs:      specs
   main-is:             Specs.hs
-  build-depends:         base       == 4.7.*
+  build-depends:         base
                        , QuickCheck
                        , smallcheck
                        , hspec
